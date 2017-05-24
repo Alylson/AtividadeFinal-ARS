@@ -9,9 +9,9 @@ ui <- fluidPage(
                    column(12,h4()),
                    column(12),                   
                    column(12,h4("Grupo A:")),
-                   column(12,h4("Leda Alves")),
-                   column(12,h4("Lena Moraes")),
-                   column(12,h4("Jeronimo Avelar Filho"))
+                   column(12,h4("LA")),
+                   column(12,h4("LM")),
+                   column(12,h4("JAF"))
            )         
                                    
                    
