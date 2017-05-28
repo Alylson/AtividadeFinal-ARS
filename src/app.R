@@ -1,4 +1,8 @@
 library(shiny)
+library(bibliometrix)
+library(easyPubMed)
+library(igraph)
+
 ui <- fluidPage(
   titlePanel("Atividade Final da Disciplina Analise de Redes Sociais com R - Professor Ricardo Barros"),
  
@@ -17,74 +21,52 @@ ui <- fluidPage(
                    
           ) ,           
       tabPanel("Definição da rede", 
-        sidebarLayout( 
-          sidebarPanel(
-                  fluidRow(
-                        column(12,
-                               selectInput(
-                                       "Selecione",
-                                       label=h4("Base de dados a ser importada:"),
-                                       choices=list(
-                                               "Graphml" = 1 ,
-                                               "Web of Science ou Scopus" = 2 ,
-                                               "PubMed Web" = 3 
-                                       ),
-                                       selected = 1
-                               ),
-                               selectInput(
-                                       "Selecione",
-                                       label=h4("Formato dos dados:"),
-                                       choices=list(
-                                               "TXT" = 1 ,
-                                               "CSV" = 2 
-                                       ),
-                                       selected = 1
-                               ) ,                              
-                               selectInput(
-                                       "Selecione",
-                                       label=h4("Tipo de Distribuicao de Rede:"),
-                                       choices=list(
-                                               "AAAAAA" = 1 ,
-                                               "BBBBBB" = 2 
-                                       ),
-                                       selected = 1
-                               )
-                               
-                        )
-                  )
- 
+        fluidRow(
+          column(3,
+            selectInput(
+              "origem_dados",
+              label=h4("Origem dos dados"),
+              choices=list(
+                "Graphml" = "graphml" ,
+                "Web of Science ou Scopus" = "wos" , 
+                "PubMed Web" = "pubmed" 
+              ),
+              selected = 1 
+            ),
+            selectInput(
+              "formato_dados",
+              label = h4("Formato dos dados"),
+              choices = list(
+                "XML" = "xml" ,
+                "TXT" = "txt" ,
+                "CSV" = "csv" 
+              ),
+              selected = 3 
+            ),
+            textAreaInput("query_string", "Texto para pesquisa", "", height = "50px")
           ),
-          mainPanel(
-                h1("")  
+          column(9,
+            h4(textOutput("texto"))
           )
-        )    
+
+        )     
       ),
 
 
       tabPanel("Tratamento de dados", 
                sidebarLayout( 
                  sidebarPanel(
-                   sliderInput(inputId = "num2", 
-                               label = "Choose a new value", 
-                               value = 25, min = 1, max = 100)
-                   
                  ),
                  mainPanel(
-                         plotOutput("hist2")      
-
                  )
                )
       ) ,
       tabPanel("Determinação de caracteristicas", 
                sidebarLayout( 
                        sidebarPanel(
-                               sliderInput(inputId = "num3", 
-                                           label = "Choose a new value", 
-                                           value = 25, min = 1, max = 100)
                                
                        ),
                        mainPanel(
-                               plotOutput("hist3")      
                                
                        )
                )
@@ -107,6 +89,12 @@ ui <- fluidPage(
   )
 )
 server <- function(input, output) {
+  output$texto <- renderText(input$query_string )
+##
+
+
+
+
   output$hist <- renderPlot({
     hist(rnorm(input$num))
     })
