@@ -1,7 +1,8 @@
 library(shiny)
 library(bibliometrix)
-library(easyPubMed)
+#library(easyPubMed)
 library(igraph)
+library(igraphinshiny)
 
 ui <- fluidPage(
   titlePanel("Atividade Final da Disciplina Analise de Redes Sociais com R - Professor Ricardo Barros"),
@@ -44,7 +45,7 @@ ui <- fluidPage(
               selected = 3 
             ),
             textAreaInput("in_query_string", "Texto para pesquisa", "", height = "50px") ,
-            submitButton(text = "Executar", icon = NULL, width = NULL)
+            actionButton(inputId = "submit", label = "Executar")
           ),
           column(9,
             plotOutput("rede")
@@ -91,41 +92,61 @@ ui <- fluidPage(
 )
 server <- function(input, output) {
 
-## Tab definicao da rede
+  ## Tab definicao da rede
+
+  observeEvent(input$submit, {
+  setwd("/home/jeronimo/Projetos/AnaliseRedes/TrabFinal/AtividadeFinal-ARS/testes")
+
+  # clear all variables
+  rm(list = ls(all.names = TRUE))
+
+  #####L? o arquivo de artigos cient?ficos salvos da Web of Science ou Scopus
+  my_file = "UserStudy&Experience_Corrigido.txt"
+  #my_name_file = "savedrecs.txt"
+  my_lines_papers<-readFiles(my_file)
+  my_file.info = paste ("Arquivo:", c(my_file), "Num. linhas:",length(my_lines_papers))
+  my_file.info
+
+  ##### Transforma o arquivo texto em dataframe.
+  ##### Escolher o dbsource ("isi" ou "scopus")
+  ##### Escolher o format do texto ("plaintext" ou  "bibtex")
+  my_dbsource = "isi" 
+  my_format = "plaintext" 
+  my_papers_df<-convert2df(my_lines_papers, dbsource=my_dbsource, format=my_format) #definir formato e font
+  # Extraindo informa??es adicionais que n?o s?o padr?o da Web Of Science e Scopus.
+  # As informa??es s?o extra?das usando a fun??o metaTagExtraction
+  # Authors' countries (Field = "AU_CO");
+  my_papers_df <- metaTagExtraction(my_papers_df, Field = "AU_CO", sep = ";")
+  # First author of each cited reference (Field = "CR_AU")
+  my_papers_df <- metaTagExtraction(my_papers_df, Field = "CR_AU", sep = ";")
+  # Publication source of each cited reference (Field = "CR_SO")
+  my_papers_df <- metaTagExtraction(my_papers_df, Field = "CR_SO", sep = ";")
+  # and Authors' affiliations (Field = "AU_UN")
+  my_papers_df <- metaTagExtraction(my_papers_df, Field = "AU_UN", sep = ";")
+  # Contando o n?mero de artigos colocados no dataframe
+  my_papers_df.info = paste ("Num. artigos:", c(nrow(my_papers_df)))
+  my_papers_df.info
+
+  ##### An?lise descritiva do data frame de informa??es bibliogr?ficas 
+  ##### Usando as fun??es do Bibliometrix
+  ##### Site de referencia http://rstudio-pubs-static.s3.amazonaws.com/261646_2d50d19852ba4e728d76041d58b80a18.html
+  #An?lise Geral 
+  my_results <- biblioAnalysis(my_papers_df, sep = ";")
+  my_results ##Imposs?vel de ler na tela.
+
+  ##### A seguir s?o mostrados calculadas as medidas e listados os mais importantes.
+  ##### Informe a quantidade de elementos que ser?o mostrados (Top Ten).
+  # Esse n?mero ser? usado em todas as estat?sticas do bibliometrix abaixo.
+  my_num_k=20 ##
+
+  # Functions summary and plot
+  my_S=summary(object = my_results, k = my_num_k, pause = FALSE)
+})
+
 output$rede <- ({      
-    query_string <- input$in_query_string 
-    on_pubmed <- get_pubmed_ids(query_string)
-    papers <- fetch_pubmed_data(on_pubmed, format = input$in_formato_dados)
-    papers_list <- articles_to_list(papers)
-    #Transformar Lista em Data Frame
-    papers_df<-c()
-    for (i in 1:10){
-      papers_df<-rbind(papers_df, article_to_df(papers_list[[i]], autofill = TRUE, max_chars = 500))
-    }
-    #Transforma Data Frame em Rede
-    edge_list<-cbind(papers_df$pmid, paste(papers_df$lastname, papers_df$firstname, sep = ", "))
-    colnames(edge_list)<-c("pmid", "AU")
-    gPub<-graph_from_data_frame(edge_list, directed = FALSE)
-    #Checando se é um grafo de dois modos e classificadno em tipo 1 e 2
-    bipartite_mapping(gPub)$res
-    V(gPub)$type<-as.logical((1:vcount(gPub)<=vcount(gPub)-length(unique(edge_list[,2]))))
-    #verificar o tamanho das redes transformadas antes de realizar a transforma??o
-    bipartite_projection_size(gPub)
-    #Criar as redes de um modo com base na rede de dois modos
-    gPubAU<-bipartite_projection(gPub)[[1]]
-    gPubID<-bipartite_projection(gPub)[[2]]
-   
+  plot(x = my_results, k = my_num_k, pause = FALSE)
 
-
-
-
-    plot (gPub)  
-  })
-
-  ##output$texto <- renderText(input$query_string )
-
-
-
+})
 
 
   output$hist <- renderPlot({
