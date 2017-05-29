@@ -1,7 +1,8 @@
 library(shiny)
 library(bibliometrix)
-library(easyPubMed)
+#library(easyPubMed)
 library(igraph)
+library(igraphinshiny)
 
 ui <- fluidPage(
   titlePanel("Atividade Final da Disciplina Analise de Redes Sociais com R - Professor Ricardo Barros"),
@@ -24,7 +25,7 @@ ui <- fluidPage(
         fluidRow(
           column(3,
             selectInput(
-              "origem_dados",
+              "in_origem_dados",
               label=h4("Origem dos dados"),
               choices=list(
                 "Graphml" = "graphml" ,
@@ -34,7 +35,7 @@ ui <- fluidPage(
               selected = 1 
             ),
             selectInput(
-              "formato_dados",
+              "in_formato_dados",
               label = h4("Formato dos dados"),
               choices = list(
                 "XML" = "xml" ,
@@ -43,10 +44,11 @@ ui <- fluidPage(
               ),
               selected = 3 
             ),
-            textAreaInput("query_string", "Texto para pesquisa", "", height = "50px")
+            textAreaInput("in_query_string", "Texto para pesquisa", "", height = "50px") ,
+            actionButton(inputId = "submit", label = "Executar")
           ),
           column(9,
-            h4(textOutput("texto"))
+            plotOutput("grafico1")
           )
 
         )     
@@ -89,10 +91,48 @@ ui <- fluidPage(
   )
 )
 server <- function(input, output) {
-  output$texto <- renderText(input$query_string )
-##
 
+  ## Tab definicao da rede
+  dados <- reactiveValues()
+  setwd("/Users/jeronimo/J/projeto/Mestrado/AnaliseDeRedes/AtividadeFinal/AtividadeFinal-ARS/testes")
+  dados$my_lines_papers <- readFiles("usec.txt")
+  
+  dados$my_dbsource = "isi" 
+  dados$my_format = "plaintext" 
 
+  
+  
+  
+
+  observeEvent(input$submit, {
+    dados$my_papers_df<-convert2df(dados$my_lines_papers, dbsource=dados$my_dbsource, format=dados$my_format) #definir formato e font
+    # Extraindo informa??es adicionais que n?o s?o padr?o da Web Of Science e Scopus.
+    # As informa??es s?o extra?das usando a fun??o metaTagExtraction
+    # Authors' countries (Field = "AU_CO");
+    dados$my_papers_df <- metaTagExtraction(dados$my_papers_df, Field = "AU_CO", sep = ";")
+    # First author of each cited reference (Field = "CR_AU")
+    dados$my_papers_df <- metaTagExtraction(dados$my_papers_df, Field = "CR_AU", sep = ";")
+    # Publication source of each cited reference (Field = "CR_SO")
+    dados$my_papers_df <- metaTagExtraction(dados$my_papers_df, Field = "CR_SO", sep = ";")
+    # and Authors' affiliations (Field = "AU_UN")
+    dados$my_papers_df <- metaTagExtraction(dados$my_papers_df, Field = "AU_UN", sep = ";")
+          
+    dados$results   <- biblioAnalysis(dados$my_papers_df, sep = ";")
+    #my_results ##Imposs?vel de ler na tela.
+
+    ##### A seguir s?o mostrados calculadas as medidas e listados os mais importantes.
+    ##### Informe a quantidade de elementos que ser?o mostrados (Top Ten).
+    # Esse n?mero ser? usado em todas as estat?sticas do bibliometrix abaixo.
+    dados$my_num_k=20 ##
+
+    # Functions summary and plot
+    dados$my_S=summary(object = dados$results, k = dados$my_num_k, pause = FALSE)
+  })
+
+output$grafico1 <- renderPlot({      
+  plot(x = dados$results, k = dados$my_num_k, pause = FALSE)
+
+})
 
 
   output$hist <- renderPlot({
