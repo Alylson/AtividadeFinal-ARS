@@ -48,7 +48,7 @@ ui <- fluidPage(
             actionButton(inputId = "submit", label = "Executar")
           ),
           column(9,
-            plotOutput("rede")
+            plotOutput("grafico1")
           )
 
         )     
@@ -93,58 +93,44 @@ ui <- fluidPage(
 server <- function(input, output) {
 
   ## Tab definicao da rede
+  dados <- reactiveValues()
+  setwd("/Users/jeronimo/J/projeto/Mestrado/AnaliseDeRedes/AtividadeFinal/AtividadeFinal-ARS/testes")
+  dados$my_lines_papers <- readFiles("usec.txt")
+  
+  dados$my_dbsource = "isi" 
+  dados$my_format = "plaintext" 
+
+  
+  
+  
 
   observeEvent(input$submit, {
-  setwd("/home/jeronimo/Projetos/AnaliseRedes/TrabFinal/AtividadeFinal-ARS/testes")
+    dados$my_papers_df<-convert2df(dados$my_lines_papers, dbsource=dados$my_dbsource, format=dados$my_format) #definir formato e font
+    # Extraindo informa??es adicionais que n?o s?o padr?o da Web Of Science e Scopus.
+    # As informa??es s?o extra?das usando a fun??o metaTagExtraction
+    # Authors' countries (Field = "AU_CO");
+    dados$my_papers_df <- metaTagExtraction(dados$my_papers_df, Field = "AU_CO", sep = ";")
+    # First author of each cited reference (Field = "CR_AU")
+    dados$my_papers_df <- metaTagExtraction(dados$my_papers_df, Field = "CR_AU", sep = ";")
+    # Publication source of each cited reference (Field = "CR_SO")
+    dados$my_papers_df <- metaTagExtraction(dados$my_papers_df, Field = "CR_SO", sep = ";")
+    # and Authors' affiliations (Field = "AU_UN")
+    dados$my_papers_df <- metaTagExtraction(dados$my_papers_df, Field = "AU_UN", sep = ";")
+          
+    dados$results   <- biblioAnalysis(dados$my_papers_df, sep = ";")
+    #my_results ##Imposs?vel de ler na tela.
 
-  # clear all variables
-  rm(list = ls(all.names = TRUE))
+    ##### A seguir s?o mostrados calculadas as medidas e listados os mais importantes.
+    ##### Informe a quantidade de elementos que ser?o mostrados (Top Ten).
+    # Esse n?mero ser? usado em todas as estat?sticas do bibliometrix abaixo.
+    dados$my_num_k=20 ##
 
-  #####L? o arquivo de artigos cient?ficos salvos da Web of Science ou Scopus
-  my_file = "UserStudy&Experience_Corrigido.txt"
-  #my_name_file = "savedrecs.txt"
-  my_lines_papers<-readFiles(my_file)
-  my_file.info = paste ("Arquivo:", c(my_file), "Num. linhas:",length(my_lines_papers))
-  my_file.info
+    # Functions summary and plot
+    dados$my_S=summary(object = dados$results, k = dados$my_num_k, pause = FALSE)
+  })
 
-  ##### Transforma o arquivo texto em dataframe.
-  ##### Escolher o dbsource ("isi" ou "scopus")
-  ##### Escolher o format do texto ("plaintext" ou  "bibtex")
-  my_dbsource = "isi" 
-  my_format = "plaintext" 
-  my_papers_df<-convert2df(my_lines_papers, dbsource=my_dbsource, format=my_format) #definir formato e font
-  # Extraindo informa??es adicionais que n?o s?o padr?o da Web Of Science e Scopus.
-  # As informa??es s?o extra?das usando a fun??o metaTagExtraction
-  # Authors' countries (Field = "AU_CO");
-  my_papers_df <- metaTagExtraction(my_papers_df, Field = "AU_CO", sep = ";")
-  # First author of each cited reference (Field = "CR_AU")
-  my_papers_df <- metaTagExtraction(my_papers_df, Field = "CR_AU", sep = ";")
-  # Publication source of each cited reference (Field = "CR_SO")
-  my_papers_df <- metaTagExtraction(my_papers_df, Field = "CR_SO", sep = ";")
-  # and Authors' affiliations (Field = "AU_UN")
-  my_papers_df <- metaTagExtraction(my_papers_df, Field = "AU_UN", sep = ";")
-  # Contando o n?mero de artigos colocados no dataframe
-  my_papers_df.info = paste ("Num. artigos:", c(nrow(my_papers_df)))
-  my_papers_df.info
-
-  ##### An?lise descritiva do data frame de informa??es bibliogr?ficas 
-  ##### Usando as fun??es do Bibliometrix
-  ##### Site de referencia http://rstudio-pubs-static.s3.amazonaws.com/261646_2d50d19852ba4e728d76041d58b80a18.html
-  #An?lise Geral 
-  my_results <- biblioAnalysis(my_papers_df, sep = ";")
-  my_results ##Imposs?vel de ler na tela.
-
-  ##### A seguir s?o mostrados calculadas as medidas e listados os mais importantes.
-  ##### Informe a quantidade de elementos que ser?o mostrados (Top Ten).
-  # Esse n?mero ser? usado em todas as estat?sticas do bibliometrix abaixo.
-  my_num_k=20 ##
-
-  # Functions summary and plot
-  my_S=summary(object = my_results, k = my_num_k, pause = FALSE)
-})
-
-output$rede <- ({      
-  plot(x = my_results, k = my_num_k, pause = FALSE)
+output$grafico1 <- renderPlot({      
+  plot(x = dados$results, k = dados$my_num_k, pause = FALSE)
 
 })
 
