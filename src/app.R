@@ -151,22 +151,35 @@ CalculaMedidasCentralidade = function(){
 
 
 ui <- fluidPage(
-  titlePanel("Atividade Final da Disciplina Analise de Redes Sociais com R - Professor Ricardo Barros"),
+  titlePanel("Analise de Redes Sociais com R - Professor Ricardo Barros"),
  
   tabsetPanel(
         tabPanel("Apresentação", 
-           fluidRow(
-                   column(12, h3("Workflow Analise de Redes")),
-                   column(12,h4()),
-                   column(12),                   
-                   column(12,h4("Grupo A:")),
-                   column(12,h4("LA")),
-                   column(12,h4("LM")),
-                   column(12,h4("JAF"))
-           )         
-                                   
+          fluidRow(
+            column(3,
+              br() ,
+              br() ,
+              br() ,
+              br() ,
+              br() ,
+              img(src = 'r_logo.png', height = '300px', width = '300px')
+
+            ),
+            column(6,
+              h3("Atividade Final da Disciplina"),
+              p("Objetivo: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque porttitor nibh ligula, in mattis massa fringilla nec. Curabitur luctus mauris ac mauris venenatis ullamcorper. Duis porta urna mauris, quis varius est aliquam id. Morbi lacinia odio ut nisl posuere cursus eu at dui. Aenean neque lorem, commodo ut pharetra vel, pellentesque ut nisi. Etiam ullamcorper facilisis tortor vitae suscipit. Sed bibendum ex vitae ultricies aliquet."),
+              br(),
+              br(),
+              br(),
+              h3("Componentes do Grupo:"),
+              p("LA"),
+              p("LM"),
+              p("JAF")
+            ) ,
+            column(3,"")
+          )
                    
-          ) ,           
+      ) ,           
       tabPanel("Definição da rede", 
         fluidRow(
           column(3,
@@ -216,7 +229,8 @@ server <- function(input, output) {
   observeEvent(input$show0, {
     showModal(modalDialog(
       title = "Publicaçoes mais referenciadas",
-      HTML(paste(PublicacoesMaisReferenciadas())),
+      HTML(PublicacoesMaisReferenciadas()),
+      size = "l" ,
       easyClose = TRUE,
       footer = NULL
     ))
@@ -233,5 +247,8 @@ server <- function(input, output) {
 
 
 }
+# sem isso nao consegue carregar graficos do diretorio www
+# os arquivos de imagem precisam estar com permissao 664
+shinyAppDir(".")
 
 shinyApp(ui = ui, server = server)
