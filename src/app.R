@@ -3,6 +3,152 @@ library(bibliometrix)
 #library(easyPubMed)
 library(igraph)
 library(igraphinshiny)
+options(shiny.maxRequestSize=30*1024^2) 
+options(shiny.port = 3000)
+
+# Variaveis  ######
+#trab_df = data.frame() 
+#trab_analise_bbl = ""
+
+my_papers_df = data.frame()          # VARIÁVEL QUE ARMAZENA O DATAFRAME PRINCIPAL CONSTRUÍDO PELO BIBLIOMETRIX
+my_graph =""                         # VARIÁVEL QUE ARMAZENA O GRAFO GERADO 
+my_results = ""                      # VARIAVEL QUE ARMAZENA ANALISE FEITA PELO BIBLIOMETRIX
+my_NetMatrix = ""
+
+# Funcoes    ######
+
+PublicacoesMaisReferenciadas = function (qtd=10){
+  CR <- citations(my_papers_df, field = "article", sep = ".  ")
+  publicacoes = capture.output(CR$Cited[2:qtd])
+  i=1
+  saida = ""
+  j=2
+  while(j <= length(publicacoes)){
+    saida = paste(saida, "<tr><td>",i,"</td><td>" ,publicacoes[j], "</td><td>" ,publicacoes[j+1], "</td></tr>")
+    j=j+2
+    i=i+1
+  }
+  saida
+}
+
+TransformaTextoEmDataframe = function(entrada){
+  my_dbsource = "isi" 
+  my_format = "plaintext" 
+  my_papers_df <<-convert2df(entrada, dbsource=my_dbsource, format=my_format) #definir formato e font
+  my_papers_df <<- metaTagExtraction(my_papers_df, Field = "AU_CO", sep = ";")
+  my_papers_df <<- metaTagExtraction(my_papers_df, Field = "CR_AU", sep = ";")
+  my_papers_df <<- metaTagExtraction(my_papers_df, Field = "CR_SO", sep = ";")
+  my_papers_df <<- metaTagExtraction(my_papers_df, Field = "AU_UN", sep = ";")
+}
+
+CriaAnaliseBibliometrica = function() { 
+  my_results <<- biblioAnalysis(my_papers_df, sep = ";")
+
+
+}
+
+QuantidadePublicacoes = function(){ length(my_papers_df[[1]]) }
+
+CalculaMedidasCentralidade = function(){
+  
+  # Grau = grau de entrada + grau de saída
+  my_graph.degree <<- degree(my_graph)
+  my_graph.degree.summary <<-summary(my_graph.degree)
+  my_graph.degree.sd <<-sd(my_graph.degree)
+  my_graph.degree.var <<-var(my_graph.degree)
+  
+  # Grau de entrada
+  my_graph.indegree <<- degree(my_graph, mode = c("in"))  #mode = c("all", "out", "in", "total")
+  my_graph.indegree.summary <<-summary(my_graph.indegree)
+  my_graph.indegree.sd <<-sd(my_graph.indegree)
+  my_graph.indegree.var <<-var(my_graph.indegree)
+  
+  # Grau de saida 
+  my_graph.outdegree <<- degree(my_graph, mode = c("out")) #mode = c("all", "out", "in", "total")
+  my_graph.outdegree.summary <<-summary(my_graph.outdegree)
+  my_graph.outdegree.sd <<-sd(my_graph.outdegree)
+  my_graph.outdegree.var <<-var(my_graph.outdegree)
+  
+  # 4.2 Força dos vértices
+  # Força = força de entrada + força de saída
+  my_graph.strengh <<-graph.strength(my_graph)
+  my_graph.strengh.summary <<-summary(my_graph.strengh)
+  my_graph.strengh.sd <<-sd(my_graph.strengh)
+  
+  # Força de entrada
+  my_graph.instrengh <<- graph.strength(my_graph, mode =c("in"))
+  my_graph.instrengh.summary <<-summary(my_graph.instrengh)
+  my_graph.instrengh.sd <<-sd(my_graph.instrengh)
+  
+  # Força de saída
+  my_graph.outstrengh <<- graph.strength(my_graph, mode =c("out"))
+  my_graph.outstrengh.summary <<-summary(my_graph.outstrengh)
+  my_graph.outstrengh.sd <<-sd(my_graph.outstrengh)
+  
+  # 4.7 log log
+  my_graph.degree.distribution <<- degree.distribution(my_graph)
+  my_d <<- 1:max(my_graph.degree)-1
+  my_ind <<- (my_graph.degree.distribution != 0) 
+  
+  #4.8 - knn Calculate the average nearest neighbor degree of the given vertices and the same quantity in the function of vertex degree
+  #my_graph.a.nn.deg <<- graph.knn(my_graph,V(my_graph))$knn
+  
+  # Diameter - distância geodesica
+  my_graph.diameter <<-diameter(my_graph, directed = TRUE, unconnected=TRUE, weights = NULL)
+  
+  ##Retorna os caminho com diametro atual
+  my_graph.get_diameter <<-get_diameter(my_graph)
+  
+  ##Retorna os 2 vértices que são conectados pelo diâmetro
+  my_graph.farthest_vertices <<-farthest_vertices(my_graph)
+  
+  # 4.Proximidade - A centralidade de proximidade mede quantas etapas são necessárias para acessar cada outro vértice de um determinado vértice.
+  my_graph.closeness <<- closeness(my_graph)
+  my_graph.closeness <<- centralization.closeness(my_graph)
+  my_graph.closeness.res.sumary <<- summary (my_graph.closeness$res)
+  my_graph.closeness.res.sd <<-sd(my_graph.closeness$res)
+  
+  # 4.Intermediação
+  my_graph.betweenness <<- betweenness(my_graph)
+  my_graph.betweenness <<- centralization.betweenness(my_graph)
+  my_graph.betweenness.res.sumary <<-summary (my_graph.betweenness$res)
+  my_graph.betweenness.res.sd <<-sd(my_graph.betweenness$res)
+  
+  # 4.Excentricidade
+  my_graph.eccentricity <<-eccentricity(my_graph)
+  my_graph.eccentricity.sumary <<- summary (my_graph.eccentricity)
+  my_graph.eccentricity.sd <<-sd(my_graph.eccentricity)
+  
+  # 4.eigen_centrality
+  my_graph.eigen <<-eigen_centrality(my_graph)
+  
+  # 4.Densidade
+  my_graph.density <<-graph.density(my_graph)
+  
+  # Modularidade
+  wtc <- cluster_walktrap(my_graph)
+  #modularity(wtc)
+  my_graph.modularity <<-modularity(my_graph, membership(wtc))
+  my_graph.modularity.matrix <<-modularity_matrix(my_graph,membership(wtc))
+  
+  # Page Rank
+  my_graph.pagerank <<-page.rank(my_graph)
+  
+  #Clusterring
+  my_graph.clustering <<-clusters(my_graph)
+  
+}
+
+##ConvArqParaDataFrame = function(entrada){
+##  trab_df <<- convert2df(entrada, dbsource="isi", format="plaintext")
+##  trab_analise_bbl <<- biblioAnalysis(trab_df, sep = ";")
+##}
+
+
+
+
+
+
 
 ui <- fluidPage(
   titlePanel("Atividade Final da Disciplina Analise de Redes Sociais com R - Professor Ricardo Barros"),
@@ -24,129 +170,68 @@ ui <- fluidPage(
       tabPanel("Definição da rede", 
         fluidRow(
           column(3,
-            selectInput(
-              "in_origem_dados",
-              label=h4("Origem dos dados"),
-              choices=list(
-                "Graphml" = "graphml" ,
-                "Web of Science ou Scopus" = "wos" , 
-                "PubMed Web" = "pubmed" 
-              ),
-              selected = 1 
-            ),
-            selectInput(
-              "in_formato_dados",
-              label = h4("Formato dos dados"),
-              choices = list(
-                "XML" = "xml" ,
-                "TXT" = "txt" ,
-                "CSV" = "csv" 
-              ),
-              selected = 3 
-            ),
-            textAreaInput("in_query_string", "Texto para pesquisa", "", height = "50px") ,
-            actionButton(inputId = "submit", label = "Executar")
+            fileInput("arqtrab", "Selecione arquivo WoS", multiple = FALSE, accept = NULL, width = NULL,
+              buttonLabel = "Browse...", placeholder = "No file selected") ,
+            textOutput('dadosArquivo')
+
           ),
           column(9,
-            plotOutput("grafico1")
+            flowLayout(
+              actionButton("show0", "Publicaçoes mais referenciadas"),
+              actionButton("show1", "Exibir painel de mensagens")
+      
+            )
           )
 
         )     
       ),
 
 
-      tabPanel("Tratamento de dados", 
-               sidebarLayout( 
-                 sidebarPanel(
-                 ),
-                 mainPanel(
-                 )
-               )
+      tabPanel("Tratamento de dados"
+
       ) ,
-      tabPanel("Determinação de caracteristicas", 
-               sidebarLayout( 
-                       sidebarPanel(
-                               
-                       ),
-                       mainPanel(
-                               
-                       )
-               )
+
+      tabPanel("Determinação de caracteristicas" 
+
       ) ,
-      tabPanel("Inspeção visual", 
-               sidebarLayout( 
-                       sidebarPanel(
-                               sliderInput(inputId = "num4", 
-                                           label = "Choose a new value", 
-                                           value = 25, min = 1, max = 100)
-                               
-                       ),
-                       mainPanel(
-                               plotOutput("hist4")      
-                               
-                       )
-               )
+
+      tabPanel("Inspeção visual"
+
       ) 
       
   )
 )
 server <- function(input, output) {
+  output$dadosArquivo = renderText({
+    arquivoEntrada <- input$arqtrab
+    if (is.null(arquivoEntrada))
+      return(NULL)
+    observacoes = readLines(arquivoEntrada$datapath)
+    TransformaTextoEmDataframe(observacoes)
+    CriaAnaliseBibliometrica()
 
-  ## Tab definicao da rede
-  dados <- reactiveValues()
-  setwd("/Users/jeronimo/J/projeto/Mestrado/AnaliseDeRedes/AtividadeFinal/AtividadeFinal-ARS/testes")
-  dados$my_lines_papers <- readFiles("usec.txt")
-  
-  dados$my_dbsource = "isi" 
-  dados$my_format = "plaintext" 
-
-  
-  
-  
-
-  observeEvent(input$submit, {
-    dados$my_papers_df<-convert2df(dados$my_lines_papers, dbsource=dados$my_dbsource, format=dados$my_format) #definir formato e font
-    # Extraindo informa??es adicionais que n?o s?o padr?o da Web Of Science e Scopus.
-    # As informa??es s?o extra?das usando a fun??o metaTagExtraction
-    # Authors' countries (Field = "AU_CO");
-    dados$my_papers_df <- metaTagExtraction(dados$my_papers_df, Field = "AU_CO", sep = ";")
-    # First author of each cited reference (Field = "CR_AU")
-    dados$my_papers_df <- metaTagExtraction(dados$my_papers_df, Field = "CR_AU", sep = ";")
-    # Publication source of each cited reference (Field = "CR_SO")
-    dados$my_papers_df <- metaTagExtraction(dados$my_papers_df, Field = "CR_SO", sep = ";")
-    # and Authors' affiliations (Field = "AU_UN")
-    dados$my_papers_df <- metaTagExtraction(dados$my_papers_df, Field = "AU_UN", sep = ";")
-          
-    dados$results   <- biblioAnalysis(dados$my_papers_df, sep = ";")
-    #my_results ##Imposs?vel de ler na tela.
-
-    ##### A seguir s?o mostrados calculadas as medidas e listados os mais importantes.
-    ##### Informe a quantidade de elementos que ser?o mostrados (Top Ten).
-    # Esse n?mero ser? usado em todas as estat?sticas do bibliometrix abaixo.
-    dados$my_num_k=20 ##
-
-    # Functions summary and plot
-    dados$my_S=summary(object = dados$results, k = dados$my_num_k, pause = FALSE)
+    print(paste("Quantidade de Publicações lidas: ", QuantidadePublicacoes()))
   })
 
-output$grafico1 <- renderPlot({      
-  plot(x = dados$results, k = dados$my_num_k, pause = FALSE)
-
-})
-
-
-  output$hist <- renderPlot({
-    hist(rnorm(input$num))
-    })
-  output$hist2 <- renderPlot({
-          hist(rnorm(input$num2))
+  observeEvent(input$show0, {
+    showModal(modalDialog(
+      title = "Publicaçoes mais referenciadas",
+      HTML(paste(PublicacoesMaisReferenciadas())),
+      easyClose = TRUE,
+      footer = NULL
+    ))
   })
-  output$hist3 <- renderPlot({
-          hist(rnorm(input$num3))
-  })  
-  output$hist4 <- renderPlot({
-          hist(rnorm(input$num4))
-  })  
+
+  observeEvent(input$show1, {
+    showModal(modalDialog(
+      title = "Saida de Dados para o evento 1 ",
+      "Dados para Exibicao ",
+      easyClose = TRUE,
+      footer = NULL
+    ))
+  })
+
+
 }
 
 shinyApp(ui = ui, server = server)
