@@ -3,6 +3,7 @@ library(bibliometrix)
 #library(easyPubMed)
 library(igraph)
 library(igraphinshiny)
+options(shiny.maxRequestSize=30*1024^2) 
 
 ui <- fluidPage(
   titlePanel("Atividade Final da Disciplina Analise de Redes Sociais com R - Professor Ricardo Barros"),
@@ -21,30 +22,11 @@ ui <- fluidPage(
                                    
                    
           ) ,           
-      tabPanel("Definição da rede", 
+      tabPanel("Definição da rede - WoS", 
         fluidRow(
           column(3,
-            selectInput(
-              "in_origem_dados",
-              label=h4("Origem dos dados"),
-              choices=list(
-                "Graphml" = "graphml" ,
-                "Web of Science ou Scopus" = "wos" , 
-                "PubMed Web" = "pubmed" 
-              ),
-              selected = 1 
-            ),
-            selectInput(
-              "in_formato_dados",
-              label = h4("Formato dos dados"),
-              choices = list(
-                "XML" = "xml" ,
-                "TXT" = "txt" ,
-                "CSV" = "csv" 
-              ),
-              selected = 3 
-            ),
-            textAreaInput("in_query_string", "Texto para pesquisa", "", height = "50px") ,
+            fileInput("arquivo1", "Selecione arquivo WoS", multiple = FALSE, accept = NULL, width = NULL,
+              buttonLabel = "Browse...", placeholder = "No file selected"),
             actionButton(inputId = "submit", label = "Executar")
           ),
           column(9,
@@ -95,8 +77,14 @@ server <- function(input, output) {
   ## Tab definicao da rede
   dados <- reactiveValues()
   setwd("/Users/jeronimo/J/projeto/Mestrado/AnaliseDeRedes/AtividadeFinal/AtividadeFinal-ARS/testes")
-  dados$my_lines_papers <- readFiles("usec.txt")
+
+  #dados$my_lines_papers <- readFiles("usec.txt")
+  #dados$my_lines_papers <- readFiles(input$arquivo1)
+  arquivoEntrada <- reactive({
+          arquivoEntrada <- input$arquivo1   
+  })
   
+  #dados$arquivo1 <- input$arquivo1 
   dados$my_dbsource = "isi" 
   dados$my_format = "plaintext" 
 
@@ -105,6 +93,7 @@ server <- function(input, output) {
   
 
   observeEvent(input$submit, {
+    dados$my_lines_papers <- readFiles(arquivoEntrada)
     dados$my_papers_df<-convert2df(dados$my_lines_papers, dbsource=dados$my_dbsource, format=dados$my_format) #definir formato e font
     # Extraindo informa??es adicionais que n?o s?o padr?o da Web Of Science e Scopus.
     # As informa??es s?o extra?das usando a fun??o metaTagExtraction
