@@ -17,6 +17,7 @@ my_NetMatrix = ""
 
 # Funcoes    ######
 
+###  Analise Bibliomtrica
 PublicacoesMaisReferenciadas = function (qtd=10){
   CR <- citations(my_papers_df, field = "article", sep = ".  ")
   publicacoes = capture.output(CR$Cited[2:qtd])
@@ -29,6 +30,7 @@ PublicacoesMaisReferenciadas = function (qtd=10){
     i=i+1
   }
   saida
+    
 }
 
 TransformaTextoEmDataframe = function(entrada){
@@ -181,22 +183,21 @@ ui <- fluidPage(
                    
       ) ,           
       tabPanel("Definição da rede", 
-        fluidRow(
-          column(3,
-            fileInput("arqtrab", "Selecione arquivo WoS", multiple = FALSE, accept = NULL, width = NULL,
-              buttonLabel = "Browse...", placeholder = "No file selected") ,
-            textOutput('dadosArquivo')
+        sidebarPanel( 
+          fileInput("arqtrab", "Selecione arquivo WoS", multiple = FALSE, accept = NULL, width = NULL,
+          buttonLabel = "Browse...", placeholder = "No file selected") ,
+          textOutput('dadosArquivo'),  
+          actionButton("show0", "Publicaçoes mais referenciadas" , class = "btn-primary btn-block"  ),
+          actionButton("show1", "Exibir painel de mensagens", class = "btn-primary  btn-block"  ),
+          actionButton("show2", "Exibir painel de mensagens", class = "btn-primary  btn-block"  ),
+          actionButton("show3", "Exibir painel de mensagens" , class = "btn-primary  btn-block" )
+        ) ,
+        mainPanel(    
+          textOutput('painel_1') 
+        )    
+           
 
-          ),
-          column(9,
-            flowLayout(
-              actionButton("show0", "Publicaçoes mais referenciadas"),
-              actionButton("show1", "Exibir painel de mensagens")
-      
-            )
-          )
-
-        )     
+              
       ),
 
 
@@ -227,13 +228,11 @@ server <- function(input, output) {
   })
 
   observeEvent(input$show0, {
-    showModal(modalDialog(
-      title = "Publicaçoes mais referenciadas",
-      HTML(PublicacoesMaisReferenciadas()),
-      size = "l" ,
-      easyClose = TRUE,
-      footer = NULL
-    ))
+    output$painel_1 = renderText({
+      PublicacoesMaisReferenciadas() 
+    })
+    
+
   })
 
   observeEvent(input$show1, {
