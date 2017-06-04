@@ -229,7 +229,11 @@ server <- function(input, output) {
 
   observeEvent(input$show0, {
     output$painel_1 = renderText({
-      PublicacoesMaisReferenciadas() 
+    HTML( 
+      "<table width=\"90%\" border='1'> <th><center>n.</center></th><th><center>Publicações</center></th><th><center>Qtd. de Referencias</center></th>
+        <caption>Publicac?es mais Refer?nciadas:</caption>",PublicacoesMaisReferenciadas(),"</table>")
+
+      #PublicacoesMaisReferenciadas() 
     })
     
 
