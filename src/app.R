@@ -14,22 +14,29 @@ my_papers_df = data.frame()          # VARIÁVEL QUE ARMAZENA O DATAFRAME PRINCI
 my_graph =""                         # VARIÁVEL QUE ARMAZENA O GRAFO GERADO 
 my_results = ""                      # VARIAVEL QUE ARMAZENA ANALISE FEITA PELO BIBLIOMETRIX
 my_NetMatrix = ""
-
+output_df = data.frame() 
 # Funcoes    ######
 
 ###  Analise Bibliomtrica
 PublicacoesMaisReferenciadas = function (qtd=10){
   CR <- citations(my_papers_df, field = "article", sep = ".  ")
   publicacoes = capture.output(CR$Cited[2:qtd])
+  publicacao <- c()
+  qtd_citacoes <- c() 
   i=1
   saida = ""
   j=2
   while(j <= length(publicacoes)){
-    saida = paste(saida, "<tr><td>",i,"</td><td>" ,publicacoes[j], "</td><td>" ,publicacoes[j+1], "</td></tr>")
+    publicacao <- append(publicacao, publicacoes[j] )
+    qtd_citacoes <- append(qtd_citacoes , publicacoes[j+1])
+    #saida = paste(saida, "<tr><td>",i,"</td><td>" ,publicacoes[j], "</td><td>" ,publicacoes[j+1], "</td></tr>")
+    print(i)
     j=j+2
     i=i+1
   }
-  saida
+  print(summary(output_df))
+  output_df <<- data.frame(publicacao,qtd_citacoes)
+  output_df 
     
 }
 
@@ -193,7 +200,7 @@ ui <- fluidPage(
           actionButton("show3", "Exibir painel de mensagens" , class = "btn-primary  btn-block" )
         ) ,
         mainPanel(    
-          textOutput('painel_1') 
+          tableOutput('painel_1') 
         )    
            
 
@@ -227,13 +234,16 @@ server <- function(input, output) {
     print(paste("Quantidade de Publicações lidas: ", QuantidadePublicacoes()))
   })
 
-  observeEvent(input$show0, {
-    output$painel_1 = renderText({
-    HTML( 
-      "<table width=\"90%\" border='1'> <th><center>n.</center></th><th><center>Publicações</center></th><th><center>Qtd. de Referencias</center></th>
-        <caption>Publicac?es mais Refer?nciadas:</caption>",PublicacoesMaisReferenciadas(),"</table>")
+  ##output$mytable = renderTable({
+  ##  as.table(sort(my_graph.degree,decreasing = TRUE)[1:100])
+  ##})
 
-      #PublicacoesMaisReferenciadas() 
+  observeEvent(input$show0, {
+    PublicacoesMaisReferenciadas() 
+    print(output_df)
+
+    output$painel_1 = renderDataTable({ 
+     output_df 
     })
     
 
