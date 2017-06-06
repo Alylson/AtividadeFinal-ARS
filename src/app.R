@@ -14,11 +14,12 @@ my_papers_df = data.frame()          # VARIÁVEL QUE ARMAZENA O DATAFRAME PRINCI
 my_graph =""                         # VARIÁVEL QUE ARMAZENA O GRAFO GERADO 
 my_results = ""                      # VARIAVEL QUE ARMAZENA ANALISE FEITA PELO BIBLIOMETRIX
 my_NetMatrix = ""
-output_df = data.frame() 
+output_df = matrix()
+
 # Funcoes    ######
 
 ###  Analise Bibliomtrica
-PublicacoesMaisReferenciadas = function (qtd=10){
+PublicacoesMaisReferenciadas = function (qtd=11){
   CR <- citations(my_papers_df, field = "article", sep = ".  ")
   publicacoes = capture.output(CR$Cited[2:qtd])
   publicacao <- c()
@@ -29,13 +30,12 @@ PublicacoesMaisReferenciadas = function (qtd=10){
   while(j <= length(publicacoes)){
     publicacao <- append(publicacao, publicacoes[j] )
     qtd_citacoes <- append(qtd_citacoes , publicacoes[j+1])
-    #saida = paste(saida, "<tr><td>",i,"</td><td>" ,publicacoes[j], "</td><td>" ,publicacoes[j+1], "</td></tr>")
     print(i)
     j=j+2
     i=i+1
   }
   print(summary(output_df))
-  output_df <<- data.frame(publicacao,qtd_citacoes)
+  output_df <<- cbind("Publicação" = publicacao, "Quantidade Citações" = qtd_citacoes )
   output_df 
     
 }
@@ -189,7 +189,7 @@ ui <- fluidPage(
           )
                    
       ) ,           
-      tabPanel("Definição da rede", 
+      tabPanel("Informações Bibliométricas", 
         sidebarPanel( 
           fileInput("arqtrab", "Selecione arquivo WoS", multiple = FALSE, accept = NULL, width = NULL,
           buttonLabel = "Browse...", placeholder = "No file selected") ,
@@ -234,16 +234,9 @@ server <- function(input, output) {
     print(paste("Quantidade de Publicações lidas: ", QuantidadePublicacoes()))
   })
 
-  ##output$mytable = renderTable({
-  ##  as.table(sort(my_graph.degree,decreasing = TRUE)[1:100])
-  ##})
-
   observeEvent(input$show0, {
-    PublicacoesMaisReferenciadas() 
-    print(output_df)
-
-    output$painel_1 = renderDataTable({ 
-     output_df 
+    output$painel_1 = renderTable({ 
+     PublicacoesMaisReferenciadas() 
     })
     
 
