@@ -14,6 +14,7 @@ my_papers_df = data.frame()          # VARIÁVEL QUE ARMAZENA O DATAFRAME PRINCIP
 my_graph =""                         # VARIÁVEL QUE ARMAZENA O GRAFO GERADO 
 my_results = ""                      # VARIAVEL QUE ARMAZENA ANALISE FEITA PELO BIBLIOMETRIX
 my_NetMatrix = ""
+my_graph_metrics = data.frame()
 
 # Funcoes    ######
 
@@ -36,7 +37,7 @@ PublicacoesMaisReferenciadas = function (qtd=10){
 TransformaTextoEmDataframe = function(entrada){
   my_dbsource = "isi" 
   my_format = "plaintext" 
-  my_papers_df <<-convert2df(entrada, dbsource=my_dbsource, format=my_format) #definir formato e font
+  my_papers_df <<- convert2df(entrada, dbsource=my_dbsource, format=my_format) #definir formato e font
   my_papers_df <<- metaTagExtraction(my_papers_df, Field = "AU_CO", sep = ";")
   my_papers_df <<- metaTagExtraction(my_papers_df, Field = "CR_AU", sep = ";")
   my_papers_df <<- metaTagExtraction(my_papers_df, Field = "CR_SO", sep = ";")
@@ -44,7 +45,7 @@ TransformaTextoEmDataframe = function(entrada){
   # VETOR DE TERMOS PARA EXTRAÇÃO
   my_keep.terms <<- c()
   # VETOR DE TERMOS A SER REMOVIDO
-  my_remove.terms <<-c()
+  my_remove.terms <<- c()
   # VETOR DE SINÔNIMOS
   my_synonyms <<- c("study; studies", "system; systems", "library;libraries", "user;users","MODEL;MODELS" )
   my_papers_df <<- termExtraction(my_papers_df, Field = "TI", synonyms=my_synonyms, remove.numbers=TRUE,  
@@ -68,55 +69,66 @@ TransformaDataframeEmGrafo = function(my_analysis, my_network, my_netDegree){
   my_graph <<-""
   my_NetMatrix <- biblioNetwork(my_papers_df, analysis = my_analysis, network = my_network, sep = ";")
   diag <- Matrix::diag 
-  my_NetMatrix <- my_NetMatrix[diag(my_NetMatrix) >= my_netDegree,diag(my_NetMatrix) >= my_netDegree]
-  diag(my_NetMatrix) <- 0
+  my_NetMatrix <-as.matrix( my_NetMatrix[diag(my_NetMatrix) >= my_netDegree,diag(my_NetMatrix) >= my_netDegree])
+  #diag(my_NetMatrix) <- 0
+  #my_NetMatrix <<-my_NetMatrix
+  #my_graph <<- graph.adjacency(my_NetMatrix)
+  #my_graph <<- graph.adjacency(my_NetMatrix,mode = "directed")
+  my_graph <<-graph_from_adjacency_matrix(my_NetMatrix, weighted=TRUE,mode = "directed")
   my_NetMatrix <<-my_NetMatrix
-  my_graph <<- graph.adjacency(my_NetMatrix,mode = "directed")
-  #my_graph <<-graph_from_adjacency_matrix(papers_matrix, mode = "directed")
-  #my_graph.description <- paste ("Network of",my_analysis,"of",my_network, "with threshold:", my_netDegree,"G=(", vcount(my_graph), ",", ecount(my_graph), ").")
-  #my_graph.description
+  my_graph.description <- paste ("Network of",my_analysis,"of",my_network, "with threshold:", my_netDegree,"G=(", vcount(my_graph), ",", ecount(my_graph), ").")
+  my_graph.description
 }
 
 CalculaMedidasCentralidade = function(){
   
-  # Grau = grau de entrada + grau de saída
-  my_graph.degree <<- degree(my_graph)
-  my_graph.degree.summary <<-summary(my_graph.degree)
-  my_graph.degree.sd <<-sd(my_graph.degree)
-  my_graph.degree.var <<-var(my_graph.degree)
+  my_graph_metrics<- data.frame(V(my_graph)$name)
+  my_graph_metrics["name"]<- data.frame(V(my_graph)$name)
+  # Grau, grau de entrada e grau de saída
+  V(my_graph)$degree <- c(degree(my_graph))
+  my_graph_metrics["degree"]<-(V(my_graph)$degree)
+  my_graph.degree.summary <- summary(V(my_graph)$degree)
+  my_graph.results.degree.sd <-sd(V(my_graph)$degree)
+  my_graph.results.degree.var <-var(V(my_graph)$degree)
   
   # Grau de entrada
-  my_graph.indegree <<- degree(my_graph, mode = c("in"))  #mode = c("all", "out", "in", "total")
-  my_graph.indegree.summary <<-summary(my_graph.indegree)
-  my_graph.indegree.sd <<-sd(my_graph.indegree)
-  my_graph.indegree.var <<-var(my_graph.indegree)
+  V(my_graph)$indegree <- c(degree(my_graph, mode = "in"))
+  my_graph_metrics["indegree"]<-(V(my_graph)$indegree)
+  my_graph.indegree.summary <<-summary(V(my_graph)$indegree)
+  my_graph.indegree.sd <<-sd(V(my_graph)$indegree)
+  my_graph.indegree.var <<-var(V(my_graph)$indegree)
   
   # Grau de saida 
-  my_graph.outdegree <<- degree(my_graph, mode = c("out")) #mode = c("all", "out", "in", "total")
-  my_graph.outdegree.summary <<-summary(my_graph.outdegree)
-  my_graph.outdegree.sd <<-sd(my_graph.outdegree)
-  my_graph.outdegree.var <<-var(my_graph.outdegree)
-  
+  V(my_graph)$outdegree <- c(degree(my_graph, mode = "out"))
+  my_graph_metrics["outdegree"] <- (V(my_graph)$outdegree)
+  my_graph.outdegree.summary <<-summary(V(my_graph)$outdegree)
+  my_graph.outdegree.sd <<-sd(V(my_graph)$outdegree)
+  my_graph.outdegree.var <<-var(V(my_graph)$outdegree)
+  my_graph_metrics<<-my_graph_metrics
   # 4.2 Força dos vértices
   # Força = força de entrada + força de saída
-  my_graph.strengh <<-graph.strength(my_graph)
-  my_graph.strengh.summary <<-summary(my_graph.strengh)
-  my_graph.strengh.sd <<-sd(my_graph.strengh)
+  V(my_graph)$strengh <- c(graph.strength(my_graph))
+  my_graph_metrics["strengh"]<- (V(my_graph)$strengh)
+  my_graph.strengh.summary <<-summary(V(my_graph)$strengh)
+  my_graph.strengh.sd <<-sd(V(my_graph)$strengh)
   
   # Força de entrada
-  my_graph.instrengh <<- graph.strength(my_graph, mode =c("in"))
-  my_graph.instrengh.summary <<-summary(my_graph.instrengh)
-  my_graph.instrengh.sd <<-sd(my_graph.instrengh)
+  V(my_graph)$instrengh <- c(graph.strength(my_graph, mode =c("in")))
+  my_graph_metrics["instrengh"]<- (V(my_graph)$instrengh)
+  my_graph.instrengh.summary <<-summary(V(my_graph)$instrengh )
+  my_graph.instrengh.sd <<-sd(V(my_graph)$instrengh )
+  my_graph.instrengh.var <<-var(V(my_graph)$instrengh)
   
   # Força de saída
-  my_graph.outstrengh <<- graph.strength(my_graph, mode =c("out"))
-  my_graph.outstrengh.summary <<-summary(my_graph.outstrengh)
-  my_graph.outstrengh.sd <<-sd(my_graph.outstrengh)
+  V(my_graph)$outstrengh <- c(graph.strength(my_graph, mode =c("out")))
+  my_graph_metrics["outstrengh"]<- (V(my_graph)$outstrengh)
+  my_graph.outstrengh.summary <<-summary(V(my_graph)$outstrengh)
+  my_graph.outstrengh.sd <<-sd(V(my_graph)$outstrengh)
   
   # 4.7 log log
-  my_graph.degree.distribution <<- degree.distribution(my_graph)
-  my_d <<- 1:max(my_graph.degree)-1
-  my_ind <<- (my_graph.degree.distribution != 0) 
+  my_graph.degree.distribution <<- c(degree.distribution(my_graph))
+  my_d <<- 1:max(V(my_graph)$degree)-1
+  my_ind <<- (V(my_graph)$degree.distribution != 0) 
   
   #4.8 - knn Calculate the average nearest neighbor degree of the given vertices and the same quantity in the function of vertex degree
   #my_graph.a.nn.deg <<- graph.knn(my_graph,V(my_graph))$knn
@@ -131,21 +143,24 @@ CalculaMedidasCentralidade = function(){
   my_graph.farthest_vertices <<-farthest_vertices(my_graph)
   
   # 4.Proximidade - A centralidade de proximidade mede quantas etapas são necessárias para acessar cada outro vértice de um determinado vértice.
-  my_graph.closeness <<- closeness(my_graph)
+  V(my_graph)$closeness <- c(closeness(my_graph))
+  my_graph_metrics["closeness"]<-(V(my_graph)$closeness)
   my_graph.closeness <<- centralization.closeness(my_graph)
   my_graph.closeness.res.sumary <<- summary (my_graph.closeness$res)
   my_graph.closeness.res.sd <<-sd(my_graph.closeness$res)
   
   # 4.Intermediação
-  my_graph.betweenness <<- betweenness(my_graph)
+  V(my_graph)$betweenness <- betweenness(my_graph)
+  my_graph_metrics["betweenness"]<- (V(my_graph)$betweenness)
   my_graph.betweenness <<- centralization.betweenness(my_graph)
   my_graph.betweenness.res.sumary <<-summary (my_graph.betweenness$res)
   my_graph.betweenness.res.sd <<-sd(my_graph.betweenness$res)
   
   # 4.Excentricidade
-  my_graph.eccentricity <<-eccentricity(my_graph)
-  my_graph.eccentricity.sumary <<- summary (my_graph.eccentricity)
-  my_graph.eccentricity.sd <<-sd(my_graph.eccentricity)
+  V(my_graph)$eccentricity <-eccentricity(my_graph)
+  my_graph_metrics["eccentricity"]<- (V(my_graph)$eccentricity)
+  my_graph.eccentricity.sumary <<- summary (V(my_graph)$eccentricity)
+  my_graph.eccentricity.sd <<-sd(V(my_graph)$eccentricity)
   
   # 4.eigen_centrality
   my_graph.eigen <<-eigen_centrality(my_graph)
@@ -160,11 +175,12 @@ CalculaMedidasCentralidade = function(){
   my_graph.modularity.matrix <<-modularity_matrix(my_graph,membership(wtc))
   
   # Page Rank
-  my_graph.pagerank <<-page.rank(my_graph)
-  
+  V(my_graph)$pagerank <-(page.rank(my_graph))$vector
+  my_graph_metrics["pagerank"]<- (V(my_graph)$pagerank)
   #Clusterring
-  my_graph.clustering <<-clusters(my_graph)
-  
+  V(my_graph)$clustering <-(clusters(my_graph))$membership
+  my_graph_metrics$clustering<- data.frame(V(my_graph)$clustering)
+  my_graph_metrics<<-my_graph_metrics
 }
 
 ImprimeGrau = function(){
@@ -205,7 +221,8 @@ ImprimeGrau = function(){
 
 ##ConvArqParaDataFrame = function(entrada){
 ##  trab_df <<- convert2df(entrada, dbsource="isi", format="plaintext")
-##  trab_analise_bbl <<- biblioAnalysis(trab_df, sep = ";")
+##  trab_analise_bbl <<- biblioAnalysis(trab_df, sep = ";"
+
 ##}
 
 
@@ -280,14 +297,28 @@ ui <- fluidPage(
                                                   "Co-occurrences TÍTULO " = "co-occurrencesTitles",
                                                   "Co-occurrences RESUMO " = "co-occurrencesAbstracts")),
                                    textOutput('out_tp_analysis'),
+                                   actionButton("in_cria_rede", "Gera Rede"),
                                    "Teste1")
                  
                ),
                mainPanel(
-                 verticalLayout(plotOutput("out_plot_net"),
-                             verbatimTextOutput("info"),
-                             tableOutput('mytable')
+                 tabsetPanel(
+                   # tabPanel("Plot",
+                   #          column(,
+                   #                 plotOutput("out_plot_net"),
+                   #                 verbatimTextOutput("info"),
+                   #                 dataTableOutput('mytable')
+                   #          )
+                   # ),
+                   tabPanel("Plot",plotOutput("out_plot_net")),
+                   tabPanel("Table", dataTableOutput('mytable')),
+                   tabPanel("Summary",verbatimTextOutput("info")) 
+                   #tabPanel("Table", dataTableOutput('mytable'))
                  )
+                 # verticalLayout(plotOutput("out_plot_net"),
+                 #             verbatimTextOutput("info"),
+                 #             tableOutput('mytable')
+                 # )
              )
           )
     ) ,
@@ -314,16 +345,20 @@ ui <- fluidPage(
                  
                ),
                mainPanel(
-                 verticalLayout(plotOutput("out_plot_degree"),
-                            plotOutput("out_plot_indegree"),
-                            plotOutput("out_plot_outdegree"),
-                            plotOutput("out_plot_boxdegree")
-                            #verbatimTextOutput("info"),
-                            #tableOutput('mytable')
+                 tabsetPanel(
+                   tabPanel("Plot",plotOutput("out_plot_degree")), 
+                   tabPanel("Summary", plotOutput("out_plot_indegree")), 
+                   tabPanel("Table", plotOutput("out_plot_boxdegree"))
                  )
-                 
-               ) 
+                 # verticalLayout(plotOutput("out_plot_degree"),
+                 #            plotOutput("out_plot_indegree"),
+                 #            plotOutput("out_plot_outdegree"),
+                 #            plotOutput("out_plot_boxdegree")
+                 #            #verbatimTextOutput("info"),
+                 #            #tableOutput('mytable')
+                 # )
              )
+          )
              
     ) ,
     
@@ -376,6 +411,30 @@ server <- function(input, output) {
     input$in_tp_analysis
   })
   
+ # observeEvent(input$in_cria_rede, )
+  
+  re <- eventReactive(input$in_cria_rede, {input$in_tp_analysis})
+  
+    #input$go,{input$a})
+  output$b <- renderText({
+    re()
+  })
+              
+  output$info <- renderText({
+    print(paste("Network of",my_analysis,"of",my_network, "with threshold:", my_netDegree,"G=(", vcount(my_graph), ",", ecount(my_graph), ")."))
+    # paste0("x=", input$plot_click$x, "\ny=", input$plot_click$y)
+  })
+
+  output$mytable = renderDataTable({
+    # dd[ order(-dd[,4], dd[,1]), ]
+    dd <-my_graph_metrics[c("name","degree","indegree","outdegree")]
+    dd[order(-dd$degree),]
+   }, options = list(lengthMenu = c(10, 10, 50,100), pageLength = 10))
+
+  output$out_tp_metrica <- renderText({
+    input$in_tp_metrica
+  })
+  
   output$out_plot_net <- renderPlot({
     if (input$in_tp_analysis=="collaborationAuthors"){
       my_analysis <- "collaboration"
@@ -420,15 +479,15 @@ server <- function(input, output) {
     if (input$in_tp_analysis=="co-occurrencesAuthors"){
       my_analysis <- "co-occurrences"
       my_network <- "authors"
-    }   
+    }
     if (input$in_tp_analysis=="co-occurrencesSources"){
       my_analysis <- "co-occurrences"
       my_network <- "sources"
-    }   
+    }
     if (input$in_tp_analysis=="co-occurrencesKeywords"){
       my_analysis <- "co-occurrences"
       my_network <- "keywords"
-    }   
+    }
     if (input$in_tp_analysis=="co-occurrencesAuthor_keywords"){
       my_analysis <- "co-occurrences"
       my_network <- "author_keywords"
@@ -443,29 +502,30 @@ server <- function(input, output) {
     }
     my_analysis <<- my_analysis
     my_network <<- my_network
-    my_netDegree <<- 1 
-    TransformaDataframeEmGrafo(my_analysis, my_network, my_netDegree) 
+    my_netDegree <<- 5
+    TransformaDataframeEmGrafo(my_analysis, my_network, my_netDegree)
     CalculaMedidasCentralidade()
-    networkPlot(my_NetMatrix, n = 20, Title = paste (c(my_analysis),c(my_network)), type = "fruchterman", size=FALSE, remove.multiple=TRUE)
-  })
-  output$info <- renderText({
-    print(paste("Network of",my_analysis,"of",my_network, "with threshold:", my_netDegree,"G=(", vcount(my_graph), ",", ecount(my_graph), ")."))
-    # paste0("x=", input$plot_click$x, "\ny=", input$plot_click$y)
-  })
-  
-  output$mytable = renderTable({
-    as.table(sort(my_graph.degree,decreasing = TRUE)[1:100])
-  })
-  
-  output$out_tp_metrica <- renderText({
-    input$in_tp_metrica
+    #networkPlot(my_NetMatrix, n = 30, Title = paste (c(my_analysis),c(my_network)), type = "fruchterman", size=FALSE, remove.multiple=TRUE)
+    # Usando a função do Igraph
+    #deg <- degree(net, mode="all")
+    V(my_graph)$size <- my_graph_metrics$degree/5
+    # We could also use the audience size value:
+    #V(net)$size <- V(net)$audience.size*0.6
+    plot(my_graph,edge.arrow.size=.1, edge.curved=.1,layout = layout.sphere, #layout = layout.sphere, #layout.sphere #layout.fruchterman.reingold,
+         vertex.size = V(my_graph)$size,
+         vertex.color="orange",vertex.frame.color = 'blue',
+         vertex.label.dist = 0.5,
+         vertex.label.color = 'black',
+         edge.color="gray",
+         vertex.label.font = 1, vertex.label = V(my_graph)$name, vertex.label.cex = 0.7)
+    
   })
   
   output$out_plot_degree <- renderPlot({
     if (input$in_tp_metrica=="netdegree"){
-      hist(my_graph.degree,col="lightblue",xlim=c(0, max(my_graph.degree)),xlab="Grau dos vértices", ylab="Frequência", main="", axes="TRUE")
-      legend("topright", c(paste("Mín.=", round(my_graph.degree.summary[1],2)), 
-                           paste("Máx.=", round(my_graph.degree.summary[6],2)), 
+      hist(V(my_graph)$degree,col="lightblue",xlim=c(0, max(V(my_graph)$degree)),xlab="Grau dos vértices", ylab="Frequência", main="", axes="TRUE")
+      legend("topright", c(paste("Mín.=", round(my_graph.degree.summary[1],2)),
+                           paste("Máx.=", round(my_graph.degree.summary[6],2)),
                            paste("Média=", round(my_graph.degree.summary[4],2)),
                            paste("Mediana=", round(my_graph.degree.summary[3],2)),
                            paste("D. Padrão=", round(my_graph.degree.sd[1],2))),
@@ -475,7 +535,7 @@ server <- function(input, output) {
   
   output$out_plot_indegree <- renderPlot({
     if (input$in_tp_metrica=="netdegree"){
-      hist(my_graph.indegree,col="lightblue", xlab="Grau de entrada", ylab="Frequência", main="", axes="TRUE")
+      hist(V(my_graph)$indegree,col="lightblue", xlab="Grau de entrada", ylab="Frequência", main="", axes="TRUE")
       legend("topright", c(paste("Mínimo =", round(my_graph.indegree.summary[1],2)), 
                            paste("Máximo=", round(my_graph.indegree.summary[6],2)), 
                            paste("Média=", round(my_graph.indegree.summary[4],2)),
@@ -487,7 +547,7 @@ server <- function(input, output) {
   
   output$out_plot_outdegree <- renderPlot({
     if (input$in_tp_metrica=="netdegree"){
-      hist(my_graph.outdegree,col="lightblue", xlab="Grau de saída", ylab="Frequência", main="", axes="TRUE")
+      hist(V(my_graph)$outdegree,col="lightblue", xlab="Grau de saída", ylab="Frequência", main="", axes="TRUE")
       legend("topright", c(paste("Mínimo =", round(my_graph.outdegree.summary[1],2)), 
                            paste("Máximo=", round(my_graph.outdegree.summary[6],2)), 
                            paste("Média=", round(my_graph.outdegree.summary[4],2)),
@@ -499,17 +559,16 @@ server <- function(input, output) {
   
   output$out_plot_boxdegree <- renderPlot({
     if (input$in_tp_metrica=="netdegree"){
-      boxplot(my_graph.indegree, my_graph.outdegree, my_graph.degree, notch = FALSE, ylab = 'Grau', 
+      boxplot(V(my_graph)$indegree, V(my_graph)$outdegree, V(my_graph)$degree, notch = FALSE, ylab = 'Grau', 
               names = c('Grau entrada', 'Grau saída', 'Grau total'), 
               main = '', col = c('blue', 'red', 'orange'),shrink=0.8, textcolor="red")
     }
   })
-  
-  
-  
+
 }
 # sem isso nao consegue carregar graficos do diretorio www
 # os arquivos de imagem precisam estar com permissao 664
-shinyAppDir(".")
+#shinyAppDir(".")
 
 shinyApp(ui = ui, server = server)
+
