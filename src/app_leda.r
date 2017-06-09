@@ -6,10 +6,9 @@ library(igraph)
 
 #ATENCAO: A INSPECAO VISUAL DESSE PROGRAMA SUPORTA REDES COM ATE 500 NOS#
 
-
 ########################INICIO FUNCTIONS FRUTCHERMAN#######################################
 
-#FRUCHTERMAN SEM SUBGRUPO AGREGADO, SEM NOS DIMENSIONADOS, SEM LINHAS DIMENSIONADOS
+#FRUCHTERMAN SEM COMP_GIGANTE OU SUBGRUPO, SEM NOS DIMENSIONADOS, SEM LINHAS DIMENSIONADOS
 PlotaFruchterman_SubNao_NoNao_LinhaNao = function() { 
   plotOutput(my_graph,edge.arrow.size=0.01, edge.color = "grey",edge.curved= 0,
        layout = layout.fruchterman.reingold,
@@ -21,7 +20,7 @@ PlotaFruchterman_SubNao_NoNao_LinhaNao = function() {
        vertex.label.font = 15, vertex.label = V(my_graph)$name, vertex.label.cex = 0.5)
 }
 
-#FRUCHTERMAN SEM SUBGRUPO AGREGADO, SEM NOS DIMENSIONADOS, COM LINHAS DIMENSIONADAS
+#FRUCHTERMAN SEM COMP_GIGANTE OU SUBGRUPO, SEM NOS DIMENSIONADOS, COM LINHAS DIMENSIONADAS
 PlotaFruchterman_SubNao_NoNao_LinhasSim = function() { 
   E(my_graph)$width <- E(my_graph)$weight/6
   plotOutput(my_graph, edge.color = "grey",edge.curved= 0,
@@ -34,7 +33,7 @@ PlotaFruchterman_SubNao_NoNao_LinhasSim = function() {
        vertex.label.font = 15, vertex.label = V(my_graph)$name, vertex.label.cex = 0.5)
 }
 
-#FRUCHTERMAN SEM SUBGRUPO AGREGADO, COM NOS DIMENSIONADOS, SEM LINHAS DIMENSIONADAS
+#FRUCHTERMAN SEM COMP_GIGANTE OU SUBGRUPO, COM NOS DIMENSIONADOS, SEM LINHAS DIMENSIONADAS
 PlotaFruchterman_SubNao_NoSim_LinhaNao = function() { 
   grau<-degree(my_graph, mode="all")  
   V(my_graph)$size<-grau*0.6 
@@ -48,7 +47,7 @@ PlotaFruchterman_SubNao_NoSim_LinhaNao = function() {
 }
 
 
-#FRUCHTERMAN SEM SUBGRUPO AGREGADO, COM NOS DIMENSIONADOS, COM LINHAS DIMENSIONADOS
+#FRUCHTERMAN SEM COMP_GIGANTE OU SUBGRUPO, COM NOS DIMENSIONADOS, COM LINHAS DIMENSIONADOS
 PlotaFruchterman_SubNao_NoSim_LinhaSim = function() { 
   E(my_graph)$width <- E(my_graph)$weight/6
   grau<-degree(my_graph, mode="all")  
@@ -329,7 +328,7 @@ PlotaCIRCLE_SubSim_NoNao_LinhaNao = function() {
 ########################FIM FUNCTIONS CIRCLE############################################
 
 
-########################FUNC??ES ISOLADAS - APAGAR ######################################
+########################FUNCOES ISOLADAS - APAGAR ######################################
 
 # plota componente gigante#
 PlotaCompgGigante = function(){
@@ -393,7 +392,7 @@ plotOutput(my_graph, mark.groups = split(1:vcount(my_graph), SCC$membership),
 }
 
 
-########################## INTERFACE DA APLICA????O #####################################
+########################## INTERFACE DA APLICACAO #####################################
 
 ui <- fluidPage(                
                 
@@ -405,22 +404,20 @@ ui <- fluidPage(
                  c('Fruchterman-Reingold' ='dist_Fruchterman,',
                    'Kamada kawai'='dist_kawai',
                    'Circle'='dist_circle')),    
-    radioButtons('in_tp_com', 'Visualizar Comunidades:',
-                c('Componente gigante'='comp_gigante',
-                  'Diferenciar subgrupos pela cor'='sub_grupo',
-                  'Nao destacar'='nao_dest')),
+    radioButtons('in_tp_com', 'Destacar subgrupos:',
+                  c('Sim'='com_subgrupo',
+                    'Nao'='sem_subgrupo')),
     radioButtons('in_tp_linha', 'Espessura da linha de acordo com o peso:',
                  c('Sim'='linha_com_peso',
                    'Nao'='linha_normal')),
-    radioButtons('in_tp_no','Dimensionar no de acordo com:',
-                 c('Numero de Publicacoes'='pub',
-                   'Numero de Citacoes'='cit2',
-                   'Nao dimensionar'= 'nao_dim')),
-    radioButtons('in_tp_cor','Colorir nos de acordo com:',
-                 c('Numero de Publicacoes'='num_pub',
-                   'Numero de Citacoes'='num_citacao',
-                   'Todos os nos da mesma cor'='no_nao_colorido')),
-  #  checkboxGroupInput('selecao', 'selecoes', choices = selecoes(data_set)),
+    radioButtons('in_tp_no','Dimensionar no de acordo com grau:',
+                 c('Sim'='no_com_grau',
+                   'Nao'='no_sem_grau')),
+# implementacao solicitada pelo professor
+#                   c('Numero de Publicacoes'='pub',
+#                   'Numero de Citacoes'='cit2',
+#                   'Nao dimensionar'= 'nao_dim')),
+      #  checkboxGroupInput('selecao', 'selecoes', choices = selecoes(data_set)),
     strong(actionButton('execute','Visualizar')),
     uiOutput('selecao_usuario')
   ),
@@ -445,28 +442,23 @@ server <- function(input, output) {
       footer = NULL
     ))
    
-      dist <- switch(input$in_tp_dist,
-                   dist_Fruchterman = PlotaFruchterman() ,
-                   dist_kawai = PlotaKawai(),
-                   dist_circle = PlotaCircle())
-      subgrupo <- switch(input$in_tp_com,
-                   dist_Fruchterman = PlotaFruchterman() ,
-                   dist_kawai = PlotaKawai(),
-                   dist_circle = PlotaCircle())
-      linha <- switch(input$in_tp_linha,
-                    dist_Fruchterman = PlotaFruchterman() ,
-                   dist_kawai = PlotaKawai(),
-                   dist_circle = PlotaCircle())
-       no    <- switch(input$in_tp_no,
-                  dist_Fruchterman = PlotaFruchterman() ,
-                   dist_kawai = PlotaKawai(),
-                   dist_circle = PlotaCircle())
-       cor   <- switch(input$in_tp_cor,
-                    dist_Fruchterman = PlotaFruchterman() ,
-                    dist_kawai = PlotaKawai(),
-                    dist_circle = PlotaCircle())
+  #   dist <- switch(input$in_tp_dist,
+  #                 dist_Fruchterman = dummy(),
+  #                 dist_kawai = dummy(),
+  #                 dist_circle = dummy()),
+  #    subgrupo <- switch(input$in_tp_com,
+  #                 dist_Fruchterman = dummy() ,
+  #                 com_subgrupo = dummy(),
+  #                 sem_subgrupo = dummy())
+  #    linha <- switch(input$in_tp_linha,
+  #                 linha_com_peso = dummy() ,
+  #                 linha_normal = dummy())
+  #     no    <- switch(input$in_tp_no,
+  #                 no_com_grau = dummy() ,
+  #                 no_sem_grau = dummy())
+ 
        
-      # PRECISA COLETAR AS OP????ES DO USUARIO PARA CHAMAR A FUN????O CORRESPONDENTE#
+      # PRECISA COLETAR AS OPCOES DO USUARIO PARA CHAMAR A FUNCAO CORRESPONDENTE#
        
   })
         
