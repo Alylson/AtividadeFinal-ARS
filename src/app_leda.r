@@ -11,7 +11,7 @@ library(igraph)
 
 #FRUCHTERMAN SEM SUBGRUPO AGREGADO, SEM NOS DIMENSIONADOS, SEM LINHAS DIMENSIONADOS
 PlotaFruchterman_SubNao_NoNao_LinhaNao = function() { 
-  plot(my_graph,edge.arrow.size=0.01, edge.color = "grey",edge.curved= 0,
+  plotOutput(my_graph,edge.arrow.size=0.01, edge.color = "grey",edge.curved= 0,
        layout = layout.fruchterman.reingold,
        vertex.color="orange",vertex.frame.color = 'black',
        #vertex.label="",
@@ -24,7 +24,7 @@ PlotaFruchterman_SubNao_NoNao_LinhaNao = function() {
 #FRUCHTERMAN SEM SUBGRUPO AGREGADO, SEM NOS DIMENSIONADOS, COM LINHAS DIMENSIONADAS
 PlotaFruchterman_SubNao_NoNao_LinhasSim = function() { 
   E(my_graph)$width <- E(my_graph)$weight/6
-  plot(my_graph, edge.color = "grey",edge.curved= 0,
+  plotOutput(my_graph, edge.color = "grey",edge.curved= 0,
        layout = layout.fruchterman.reingold,
        vertex.color="orange",vertex.frame.color = 'black',
        #vertex.label="",
@@ -38,7 +38,7 @@ PlotaFruchterman_SubNao_NoNao_LinhasSim = function() {
 PlotaFruchterman_SubNao_NoSim_LinhaNao = function() { 
   grau<-degree(my_graph, mode="all")  
   V(my_graph)$size<-grau*0.6 
-  plot(my_graph,edge.arrow.size=0.01, edge.color = "grey",edge.curved= 0,
+  plotOutput(my_graph,edge.arrow.size=0.01, edge.color = "grey",edge.curved= 0,
        layout = layout.fruchterman.reingold,
        vertex.color="orange",vertex.frame.color = 'black',
        #vertex.label="",
@@ -53,7 +53,7 @@ PlotaFruchterman_SubNao_NoSim_LinhaSim = function() {
   E(my_graph)$width <- E(my_graph)$weight/6
   grau<-degree(my_graph, mode="all")  
   V(my_graph)$size<-grau*0.6 
-  plot(my_graph, edge.color = "grey",edge.curved= 0,
+  plotOutput(my_graph, edge.color = "grey",edge.curved= 0,
        layout = layout.fruchterman.reingold,
        vertex.color="orange",vertex.frame.color = 'black',
        #vertex.label="",
@@ -70,7 +70,7 @@ PlotaFruchterman_SubSim_NoSim_LinhaSim = function() {
   V(my_graph)$size<-grau*0.6 
   SCC <- clusters(my_graph, mode="strong")  
   V(my_graph)$color <- rainbow(SCC$no)[SCC$membership]
-   plot(my_graph, mark.groups = split(1:vcount(my_graph), SCC$membership),
+   plotOutput(my_graph, mark.groups = split(1:vcount(my_graph), SCC$membership),
         layout = layout.fruchterman.reingold,
       vertex.frame.color="black", edge.color="grey",
       vertex.label.font= 1)
@@ -82,7 +82,7 @@ PlotaFruchterman_SubSim_NoSim_LinhaNao = function() {
   V(my_graph)$size<-grau*0.6 
   SCC <- clusters(my_graph, mode="strong")  
   V(my_graph)$color <- rainbow(SCC$no)[SCC$membership]
-  plot(my_graph, mark.groups = split(1:vcount(my_graph), SCC$membership),
+  plotOutput(my_graph, mark.groups = split(1:vcount(my_graph), SCC$membership),
        layout = layout.fruchterman.reingold,
        vertex.frame.color="black", edge.color="grey", edge.arrow.size=0.01,
        vertex.label.font= 1)
@@ -95,7 +95,7 @@ PlotaFruchterman_SubSim_NoNao_LinhaSim = function() {
   V(my_graph)$size<-grau*0.6 
   SCC <- clusters(my_graph, mode="strong")  
   V(my_graph)$color <- rainbow(SCC$no)[SCC$membership]
-  plot(my_graph, mark.groups = split(1:vcount(my_graph), SCC$membership),
+  plotOutput(my_graph, mark.groups = split(1:vcount(my_graph), SCC$membership),
        layout = layout.fruchterman.reingold,
        vertex.frame.color="black", edge.color="grey",
        vertex.label.font= 1)
@@ -105,7 +105,7 @@ PlotaFruchterman_SubSim_NoNao_LinhaSim = function() {
 PlotaFruchterman_SubSim_NoNao_LinhaNao = function() { 
   SCC <- clusters(my_graph, mode="strong")  
   V(my_graph)$color <- rainbow(SCC$no)[SCC$membership]
-  plot(my_graph, mark.groups = split(1:vcount(my_graph), SCC$membership),
+  plotOutput(my_graph, mark.groups = split(1:vcount(my_graph), SCC$membership),
        layout = layout.fruchterman.reingold,
        vertex.frame.color="black", edge.color="grey",
        vertex.label.font= 1)
@@ -117,7 +117,7 @@ PlotaFruchterman_SubSim_NoNao_LinhaNao = function() {
 
 #KAWAI SEM SUBGRUPO AGREGADO, SEM NOS DIMENSIONADOS, SEM LINHAS DIMENSIONADOS
 PlotaKAWAI_SubNao_NoNao_LinhaNao = function() { 
-  plot(my_graph,edge.arrow.size=0.01, edge.color = "grey",edge.curved= 0,
+  plotOutput(my_graph,edge.arrow.size=0.01, edge.color = "grey",edge.curved= 0,
        layout = layout.kamada.kawai,
        vertex.color="orange",vertex.frame.color = 'black',
        #vertex.label="",
@@ -130,7 +130,7 @@ PlotaKAWAI_SubNao_NoNao_LinhaNao = function() {
 #KAWAI SEM SUBGRUPO AGREGADO, SEM NOS DIMENSIONADOS, COM LINHAS DIMENSIONADAS
 PlotaKAWAI_SubNao_NoNao_LinhasSim = function() { 
   E(my_graph)$width <- E(my_graph)$weight/6
-   plot(my_graph, edge.color = "grey",edge.curved= 0,
+   plotOutput(my_graph, edge.color = "grey",edge.curved= 0,
        layout = layout.kamada.kawai,
        vertex.color="orange",vertex.frame.color = 'black',
        #vertex.label="",
@@ -144,7 +144,7 @@ PlotaKAWAI_SubNao_NoNao_LinhasSim = function() {
 PlotaKAWAI_SubNao_NoSim_LinhaNao = function() { 
   grau<-degree(my_graph, mode="all")  
   V(my_graph)$size<-grau*0.6 
-  plot(my_graph,edge.arrow.size=0.01, edge.color = "grey",edge.curved= 0,
+  plotOutput(my_graph,edge.arrow.size=0.01, edge.color = "grey",edge.curved= 0,
        layout = layout.kamada.kawai,
        vertex.color="orange",vertex.frame.color = 'black',
        #vertex.label="",
@@ -159,7 +159,7 @@ PlotaKAWAI_SubNao_NoSim_LinhaSim = function() {
   E(my_graph)$width <- E(my_graph)$weight/6
   grau<-degree(my_graph, mode="all")  
   V(my_graph)$size<-grau*0.6 
-  plot(my_graph, edge.color = "grey",edge.curved= 0,
+  plotOutput(my_graph, edge.color = "grey",edge.curved= 0,
        layout = layout.kamada.kawai,
        vertex.color="orange",vertex.frame.color = 'black',
        #vertex.label="",
@@ -176,7 +176,7 @@ PlotaKAWAI_SubSim_NoSim_LinhaSim = function() {
   V(my_graph)$size<-grau*0.6 
   SCC <- clusters(my_graph, mode="strong")  
   V(my_graph)$color <- rainbow(SCC$no)[SCC$membership]
-  plot(my_graph, mark.groups = split(1:vcount(my_graph), SCC$membership),
+  plotOutput(my_graph, mark.groups = split(1:vcount(my_graph), SCC$membership),
        layout = layout.kamada.kawai,
        vertex.frame.color="black", edge.color="grey",
        vertex.label.font= 1)
@@ -188,7 +188,7 @@ PlotaKAWAI_SubSim_NoSim_LinhaNao = function() {
   V(my_graph)$size<-grau*0.6 
   SCC <- clusters(my_graph, mode="strong")  
   V(my_graph)$color <- rainbow(SCC$no)[SCC$membership]
-  plot(my_graph, mark.groups = split(1:vcount(my_graph), SCC$membership),
+  plotOutput(my_graph, mark.groups = split(1:vcount(my_graph), SCC$membership),
        layout = layout.kamada.kawai,
        vertex.frame.color="black", edge.color="grey", edge.arrow.size=0.01,
        vertex.label.font= 1)
@@ -201,7 +201,7 @@ PlotaKAWAI_SubSim_NoNao_LinhaSim = function() {
   V(my_graph)$size<-grau*0.6 
   SCC <- clusters(my_graph, mode="strong")  
   V(my_graph)$color <- rainbow(SCC$no)[SCC$membership]
-  plot(my_graph, mark.groups = split(1:vcount(my_graph), SCC$membership),
+  plotOutput(my_graph, mark.groups = split(1:vcount(my_graph), SCC$membership),
        layout = layout.kamada.kawai,
        vertex.frame.color="black", edge.color="grey",
        vertex.label.font= 1)
@@ -211,7 +211,7 @@ PlotaKAWAI_SubSim_NoNao_LinhaSim = function() {
 PlotaKAWAI_SubSim_NoNao_LinhaNao = function() { 
   SCC <- clusters(my_graph, mode="strong")  
   V(my_graph)$color <- rainbow(SCC$no)[SCC$membership]
-  plot(my_graph, mark.groups = split(1:vcount(my_graph), SCC$membership),
+  plotOutput(my_graph, mark.groups = split(1:vcount(my_graph), SCC$membership),
        layout = layout.kamada.kawai,
        vertex.frame.color="black", edge.color="grey",
        vertex.label.font= 1)
@@ -224,7 +224,7 @@ PlotaKAWAI_SubSim_NoNao_LinhaNao = function() {
 
 #CIRCLE SEM SUBGRUPO AGREGADO, SEM NOS DIMENSIONADOS, SEM LINHAS DIMENSIONADOS
 PlotaCIRCLE_SubNao_NoNao_LinhaNao = function() { 
-  plot(my_graph,edge.arrow.size=0.01, edge.color = "grey",edge.curved= 0,
+  plotOutput(my_graph,edge.arrow.size=0.01, edge.color = "grey",edge.curved= 0,
        layout = layout.circle,
        vertex.color="orange",vertex.frame.color = 'black',
        #vertex.label="",
@@ -237,7 +237,7 @@ PlotaCIRCLE_SubNao_NoNao_LinhaNao = function() {
 #CIRCLE SEM SUBGRUPO AGREGADO, SEM NOS DIMENSIONADOS, COM LINHAS DIMENSIONADAS
 PlotaCIRCLE_SubNao_NoNao_LinhasSim = function() { 
   E(my_graph)$width <- E(my_graph)$weight/6
-  plot(my_graph, edge.color = "grey",edge.curved= 0,
+  plotOutput(my_graph, edge.color = "grey",edge.curved= 0,
        layout = layout.circle,
        vertex.color="orange",vertex.frame.color = 'black',
        #vertex.label="",
@@ -251,7 +251,7 @@ PlotaCIRCLE_SubNao_NoNao_LinhasSim = function() {
 PlotaCIRCLE_SubNao_NoSim_LinhaNao = function() { 
   grau<-degree(my_graph, mode="all")  
   V(my_graph)$size<-grau*0.6 
-  plot(my_graph,edge.arrow.size=0.01, edge.color = "grey",edge.curved= 0,
+  plotOutput(my_graph,edge.arrow.size=0.01, edge.color = "grey",edge.curved= 0,
        layout = layout.circle,
        vertex.color="orange",vertex.frame.color = 'black',
        #vertex.label="",
@@ -266,7 +266,7 @@ PlotaCIRCLE_SubNao_NoSim_LinhaSim = function() {
   E(my_graph)$width <- E(my_graph)$weight/6
   grau<-degree(my_graph, mode="all")  
   V(my_graph)$size<-grau*0.6 
-  plot(my_graph, edge.color = "grey",edge.curved= 0,
+  plotOutput(my_graph, edge.color = "grey",edge.curved= 0,
        layout = layout.circle,
        vertex.color="orange",vertex.frame.color = 'black',
        #vertex.label="",
@@ -283,7 +283,7 @@ PlotaCIRCLE_SubSim_NoSim_LinhaSim = function() {
   V(my_graph)$size<-grau*0.6 
   SCC <- clusters(my_graph, mode="strong")  
   V(my_graph)$color <- rainbow(SCC$no)[SCC$membership]
-  plot(my_graph, mark.groups = split(1:vcount(my_graph), SCC$membership),
+  plotOutput(my_graph, mark.groups = split(1:vcount(my_graph), SCC$membership),
        layout = layout.circle,
        vertex.frame.color="black", edge.color="grey",
        vertex.label.font= 1)
@@ -295,7 +295,7 @@ PlotaCIRCLE_SubSim_NoSim_LinhaNao = function() {
   V(my_graph)$size<-grau*0.6 
   SCC <- clusters(my_graph, mode="strong")  
   V(my_graph)$color <- rainbow(SCC$no)[SCC$membership]
-  plot(my_graph, mark.groups = split(1:vcount(my_graph), SCC$membership),
+  plotOutput(my_graph, mark.groups = split(1:vcount(my_graph), SCC$membership),
        layout = layout.circle,
        vertex.frame.color="black", edge.color="grey", edge.arrow.size=0.01,
        vertex.label.font= 1)
@@ -308,7 +308,7 @@ PlotaCIRCLE_SubSim_NoNao_LinhaSim = function() {
   V(my_graph)$size<-grau*0.6 
   SCC <- clusters(my_graph, mode="strong")  
   V(my_graph)$color <- rainbow(SCC$no)[SCC$membership]
-  plot(my_graph, mark.groups = split(1:vcount(my_graph), SCC$membership),
+  plotOutput(my_graph, mark.groups = split(1:vcount(my_graph), SCC$membership),
        layout = layout.circle,
        vertex.frame.color="black", edge.color="grey",
        vertex.label.font= 1)
@@ -318,7 +318,7 @@ PlotaCIRCLE_SubSim_NoNao_LinhaSim = function() {
 PlotaCIRCLE_SubSim_NoNao_LinhaNao = function() { 
   SCC <- clusters(my_graph, mode="strong")  
   V(my_graph)$color <- rainbow(SCC$no)[SCC$membership]
-  plot(my_graph, mark.groups = split(1:vcount(my_graph), SCC$membership),
+  plotOutput(my_graph, mark.groups = split(1:vcount(my_graph), SCC$membership),
        layout = layout.circle,
        vertex.frame.color="black", edge.color="grey",
        vertex.label.font= 1)
@@ -336,7 +336,7 @@ PlotaCompgGigante = function(){
 comp_gigante <- decompose.graph(my_graph)
 largest <- which.max(sapply(comp_gigante, vcount))
 plot.new()
-plot(comp_gigante[[largest]], edge.arrow.size=0.01,edge.color="grey",layout=layout.fruchterman.reingold,
+plotOutput(comp_gigante[[largest]], edge.arrow.size=0.01,edge.color="grey",layout=layout.fruchterman.reingold,
      vertex.color="orange",vertex.frame.color = 'black',
      #vertex.label="",
      vertex.label.dist = 0,
@@ -354,7 +354,7 @@ comp_gigante <- fastgreedy.community(simplify(as.undirected(my_graph)))
 Q <- round(max(comp_gigante$modularity), 2)
 l <- layout.fruchterman.reingold(my_graph)
 plot.new()
-plot(my_graph, layout=layout.fruchterman.reingold, 
+plotOutput(my_graph, layout=layout.fruchterman.reingold, 
      vertex.size=5, vertex.color="orange",
      vertex.frame.color="black", edge.color="grey",
      edge.arrow.size=0.01,vertex.label.font = 1)
@@ -365,7 +365,7 @@ PlotaNosDimensionados = function(){
 grau<-degree(my_graph, mode="all")  
 V(my_graph)$size<-grau*0.6
 plot.new()
-plot(my_graph,edge.arrow.size=0.01, edge.color="grey",layout=layout.fruchterman.reingold,
+plotOutput(my_graph,edge.arrow.size=0.01, edge.color="grey",layout=layout.fruchterman.reingold,
      vertex.color="orange",vertex.frame.color = 'blue',
      vertex.label.dist = 0,
      vertex.label.color = 'black',
@@ -376,7 +376,7 @@ plot(my_graph,edge.arrow.size=0.01, edge.color="grey",layout=layout.fruchterman.
 PlotaLinhasDimensionadas = function(){
 E(my_graph)$width <- E(my_graph)$weight/6
 plot.new()
-plot(my_graph,edge.color="grey",layout=layout.fruchterman.reingold,
+plotOutput(my_graph,edge.color="grey",layout=layout.fruchterman.reingold,
      vertex.color="orange",vertex.frame.color = 'blue',
      vertex.label.dist = 0,
      vertex.label.color = 'black',
@@ -387,7 +387,7 @@ plot(my_graph,edge.color="grey",layout=layout.fruchterman.reingold,
 PlotaSubgrupos = function() {
 SCC <- clusters(my_graph, mode="strong")  
 V(my_graph)$color <- rainbow(SCC$no)[SCC$membership]
-plot(my_graph, mark.groups = split(1:vcount(my_graph), SCC$membership),
+plotOutput(my_graph, mark.groups = split(1:vcount(my_graph), SCC$membership),
      vertex.size=0.5,  vertex.frame.color="black", edge.color="grey",
      edge.arrow.size=0.01, vertex.label.font= 1)
 }
@@ -434,7 +434,7 @@ ui <- fluidPage(
 
 server <- function(input, output) {
  
-   renderPlot('displot')
+   renderplotOutput('displot')
   
   #teste para o action button, trocar pelo plot do grafo com a selecao do usuario #
  
