@@ -434,7 +434,7 @@ ui <- fluidPage(
 
 server <- function(input, output) {
  
-   renderplotOutput('displot')
+   renderPlot('displot')
   
   #teste para o action button, trocar pelo plot do grafo com a selecao do usuario #
  
