@@ -16,12 +16,13 @@ my_graph =""                         # VARIÁVEL QUE ARMAZENA O GRAFO GERADO
 my_results = ""                      # VARIAVEL QUE ARMAZENA ANALISE FEITA PELO BIBLIOMETRIX
 my_NetMatrix = ""
 my_graph_metrics = data.frame()
-output_df = matrix()
+#output_df = matrix()
 
 # Funcoes    ######
 
 ###  Analise Bibliomtrica
 PublicacoesMaisReferenciadas = function (qtd=11){
+  print("Inicio PublicacaoesMaisReferenciadas")
   CR <- citations(my_papers_df, field = "article", sep = ".  ")
   publicacoes = capture.output(CR$Cited[2:qtd])
   publicacao <- c()
@@ -36,11 +37,44 @@ PublicacoesMaisReferenciadas = function (qtd=11){
     j=j+2
     i=i+1
   }
-  print(summary(output_df))
-  output_df <<- cbind("Publicação" = publicacao, "Quantidade Citações" = qtd_citacoes )
-  output_df 
-    
+  #print(summary(output_df))
+  #output_df <<- cbind("Publicação" = publicacao, "Quantidade Citações" = qtd_citacoes )
+  #output_df 
+  saida <- data.frame(publicacao, qtd_citacoes)
+  names(saida) <- c("Publicação" , "Quantidade de Citações") 
+  print("Fim PublicacaoesMaisReferenciadas")
+
+  saida
+
 }
+
+# AUTORES MAIS CITADOS
+AutoresMaisCitados = function(n=10,ano="Todos"){
+
+  if(ano != "Todos") {autores = my_papers_df$AU[my_papers_df$PY==ano]}
+  else {autores = my_papers_df$AU}
+  vautores = c()
+  print("Arrumando autores")
+  for(i in autores){
+
+    for(j in strsplit(i, ";"))   vautores = c(vautores, trimws(j))
+  }
+  print("Fim autores")
+  t=sort(table(vautores), decreasing = TRUE)
+  autores = names(t)
+  qtds = as.vector(t)
+  #saida <-  cbind("Autores" = autores , "Numero de Citações" = qtds)
+  saida <- data.frame(autores,qtds) 
+  names(saida) <- c( "Autores" , "Numero de Citações")
+  #for(i in 1:n){
+  #  saida =   paste(saida,"<tr><td>",autores[i],"</td><td align='right'>",fns(qtds[i]),"</td></tr>")
+  #}
+  saida
+}
+
+###  Fim Analise Bibliomtrica
+
+
 
 TransformaTextoEmDataframe = function(entrada){
   my_dbsource = "isi" 
@@ -271,12 +305,13 @@ ui <- fluidPage(
         buttonLabel = "Browse...", placeholder = "No file selected") ,
         textOutput('dadosArquivo'),  
         actionButton("show0", "Publicaçoes mais referenciadas" , class = "btn-primary btn-block"  ),
-        actionButton("show1", "Exibir painel de mensagens", class = "btn-primary  btn-block"  ),
+        actionButton("show1", "Autores Mais Citados", class = "btn-primary  btn-block"  ),
         actionButton("show2", "Exibir painel de mensagens", class = "btn-primary  btn-block"  ),
         actionButton("show3", "Exibir painel de mensagens" , class = "btn-primary  btn-block" )
       ) ,
       mainPanel(    
-        tableOutput('painel_1') 
+        dataTableOutput('painel_1')
+         
       )    
          
 
@@ -385,33 +420,31 @@ server <- function(input, output) {
     observacoes = readLines(arquivoEntrada$datapath)
     TransformaTextoEmDataframe(observacoes)
     CriaAnaliseBibliometrica()
-    print(paste("Quantidade de Publicações lidas: ", QuantidadePublicacoes()))
     
     my_analysis <<- "collaboration"
     my_network <<- "authors"
     my_netDegree <<- 1 
     TransformaDataframeEmGrafo(my_analysis, my_network, my_netDegree)
     CalculaMedidasCentralidade()
+    #mudando de posiçao para ser a ultima mensagem a ser exibida
+    print(paste("Quantidade de Publicações lidas: ", QuantidadePublicacoes()))
     
   })
 
   observeEvent(input$show0, {
-    output$painel_1 = renderTable({ 
+    output$painel_1 = renderDataTable(
      PublicacoesMaisReferenciadas() 
-    })
-    
-
+     , options = list(lengthMenu = c(10, 10, 50,100), pageLength = 10)
+    )
   })
 
-  
   observeEvent(input$show1, {
-    showModal(modalDialog(
-      title = "Saida de Dados para o evento 1 ",
-      "Dados para Exibicao ",
-      easyClose = TRUE,
-      footer = NULL
-    ))
-  })
+    output$painel_1 =  renderDataTable(
+     AutoresMaisCitados()  
+     , options = list(lengthMenu = c(10, 10, 50,100), pageLength = 10) 
+    )
+  })  
+  
   
   output$out_tp_analysis = renderText({
     input$in_tp_analysis
