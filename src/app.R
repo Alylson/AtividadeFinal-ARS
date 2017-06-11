@@ -145,8 +145,9 @@ TiposDePublicacao = function(){
   saida
 }
 
-CriaMapaDePalavras = function() {
-  d = my_papers_df$DE[!is.na(my_papers_df$DE)]
+CriaNuvemDePalavras = function() {
+  #x= sort(table (my_papers_df$LA), decreasing = TRUE)
+  d =   my_papers_df$DE[!is.na(my_papers_df$DE)] 
   conjunto_palavras = Corpus(VectorSource(d))
   ##conjunto_palavras <- tm_map(saida, content_transformer(tolower))
   ##conjunto_palavras <- tm_map(saida, removePunctuation)
@@ -159,9 +160,8 @@ CriaMapaDePalavras = function() {
   v <- sort(rowSums(matrix) , decreasing=TRUE )
   d <- data.frame(word = names(v) , freq=v)
 
-  
-
-  saida <- d$word
+  saida <- wordcloud(d$word , d$freq ,  scale = c(8, 0.5) , max.words = 100, min.freq=10 ,  random.order = FALSE, colors=brewer.pal(8, "Set1"))
+  saida
 }
 
 
@@ -590,7 +590,8 @@ server <- function(input, output) {
     hide("painel_1")
     show("nuvem_de_palavras_chave")
     output$nuvem_de_palavras_chave =  renderPlot({ 
-       wordcloud(CriaMapaDePalavras() , max.words = 100, random.order = FALSE, colors=brewer.pal(8, "Dark2"))
+       #wordcloud(CriaMapaDePalavras() , max.words = 100, random.order = FALSE, colors=brewer.pal(8, "Dark2"))
+      CriaNuvemDePalavras() 
     })
   })  
 
