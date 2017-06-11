@@ -111,6 +111,35 @@ LinguasPublicacao = function(){
   saida
 }
 
+# LISTA PER?ODICOS QUE MAIS PUBLICAM
+PeriodicosQueMaisPublicam = function(n,ano="Todos"){
+  print("Inicio Periodico")
+  if(ano != "Todos") {periodicos = my_papers_df$PU[my_papers_df$PY==ano]}
+  else {periodicos = my_papers_df$PU}
+  t=sort(table(periodicos), decreasing = TRUE)
+  nomes = names(t)
+  qtds = as.vector(t)
+
+  saida <- data.frame(nomes,qtds)
+  names(saida) <- c("Periódico" , "Quantidade de Publicações")
+  print("Fim Periodico")
+
+  saida
+}
+
+TiposDePublicacao = function(){
+  print("Inicio de TiposDePublicacao")
+  x= sort(table (my_papers_df$DT), decreasing = TRUE)
+  tiposDePublicacao = c(names(x))
+  valores = c(as.vector(x))
+ 
+  saida <- data.frame(tiposDePublicacao,valores)
+  names(saida) <- c("Tipo de Publicacao" , "Quantidade")
+  print("Fim de TiposDePublicacao")
+
+
+  saida
+}
 ###  Fim Analise Bibliomtrica
 
 
@@ -343,10 +372,13 @@ ui <- fluidPage(
         fileInput("arqtrab", "Selecione arquivo WoS", multiple = FALSE, accept = NULL, width = NULL,
         buttonLabel = "Browse...", placeholder = "No file selected") ,
         textOutput('dadosArquivo'),  
-        actionButton("show0", "Publicaçoes mais referenciadas" , class = "btn-primary btn-block"  ),
-        actionButton("show1", "Autores Mais Citados", class = "btn-primary  btn-block"  ),
-        actionButton("show2", "Palavras Chaves Mais Utilizadas", class = "btn-primary  btn-block"  ),
-        actionButton("show3", "Linguas mais utilizadas para publicacao" , class = "btn-primary  btn-block" )
+        actionButton("show0", "Publicaçoes referenciadas" , class = "btn-primary btn-block"  ),
+        actionButton("show1", "Autores Citados", class = "btn-primary  btn-block"  ),
+        actionButton("show2", "Palavras Chaves Utilizadas", class = "btn-primary  btn-block"  ),
+        actionButton("show3", "Linguas Utilizadas Para Publicacao" , class = "btn-primary  btn-block" ),
+        actionButton("show4", "Periodicos Utilizados Para Publicação" , class = "btn-primary  btn-block" ),
+        actionButton("show5", "Tipos de Publicação Utilizados" , class = "btn-primary  btn-block" )
+
       ) ,
       mainPanel(    
         dataTableOutput('painel_1')
@@ -498,7 +530,20 @@ server <- function(input, output) {
      , options = list(lengthMenu = c(10, 10, 50,100), pageLength = 10) 
     )
   })  
-  
+ 
+ observeEvent(input$show4, {
+    output$painel_1 =  renderDataTable(
+     PeriodicosQueMaisPublicam()
+     , options = list(lengthMenu = c(10, 10, 50,100), pageLength = 10) 
+    )
+  })    
+
+ observeEvent(input$show5, {
+    output$painel_1 =  renderDataTable(
+     TiposDePublicacao()
+     , options = list(lengthMenu = c(10, 10, 50,100), pageLength = 10) 
+    )
+  })  
   # Fim Analise Bibliometrica
 
   output$out_tp_analysis = renderText({
