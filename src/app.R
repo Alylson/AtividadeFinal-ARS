@@ -1,15 +1,19 @@
 library(shiny)
+library(shinyjs)
+
 library(bibliometrix)
 #library(easyPubMed)
 library(igraph)
 library(igraphinshiny)
+
+library("tm")
+library("SnowballC")
+library("wordcloud")
+
 options(shiny.maxRequestSize=30*1024^2) 
 options(shiny.port = 3000)
 Sys.setenv(LANG = "pt_BR.UTF-8")
 
-# Variaveis  ######
-#trab_df = data.frame() 
-#trab_analise_bbl = ""
 
 my_papers_df = data.frame()          # VARIÁVEL QUE ARMAZENA O DATAFRAME PRINCIPAL CONSTRUÍDO PELO BIBLIOMETRIX
 my_graph =""                         # VARIÁVEL QUE ARMAZENA O GRAFO GERADO 
@@ -140,6 +144,27 @@ TiposDePublicacao = function(){
 
   saida
 }
+
+CriaMapaDePalavras = function() {
+  d = my_papers_df$DE[!is.na(my_papers_df$DE)]
+  saida = Corpus(VectorSource(d))
+
+  tdm <- TermDocumentMatrix(saida)
+  matrix <- as.matrix(tdm)
+  v <- sort(rowSums(matrix) , decreasing=TRUE )
+  d <- data.frame(word = names(v) , freq=v)
+
+  
+  ##saida <- tm_map(saida, content_transformer(tolower))
+  ##saida <- tm_map(saida, removePunctuation)
+  ##saida <- tm_map(saida, PlainTextDocument)
+  ##saida <- tm_map(saida, removeWords, stopwords('english'))
+  ##saida <- tm_map(saida, stemDocument)
+
+  saida <- d$word
+}
+
+
 ###  Fim Analise Bibliomtrica
 
 
@@ -338,6 +363,7 @@ ImprimeGrau = function(){
 
 
 ui <- fluidPage(
+  useShinyjs() ,
   titlePanel("Analise de Redes Sociais com R - Professor Ricardo Barros"),
   
   tabsetPanel(
@@ -377,12 +403,14 @@ ui <- fluidPage(
         actionButton("show2", "Palavras Chaves Utilizadas", class = "btn-primary  btn-block"  ),
         actionButton("show3", "Linguas Utilizadas Para Publicacao" , class = "btn-primary  btn-block" ),
         actionButton("show4", "Periodicos Utilizados Para Publicação" , class = "btn-primary  btn-block" ),
-        actionButton("show5", "Tipos de Publicação Utilizados" , class = "btn-primary  btn-block" )
+        actionButton("show5", "Tipos de Publicação Utilizados" , class = "btn-primary  btn-block" ),
+        actionButton("show6", "Nuvem de Palavras" , class = "btn-primary  btn-block" )
+
 
       ) ,
       mainPanel(    
-        dataTableOutput('painel_1')
-         
+        dataTableOutput('painel_1') ,
+        plotOutput("nuvem_de_palavras_chave", width = "100%")
       )    
          
 
@@ -505,6 +533,7 @@ server <- function(input, output) {
   # Analise Bibliometrica
   observeEvent(input$show0, {
     output$painel_1 = renderDataTable(
+
      PublicacoesMaisReferenciadas() 
      , options = list(lengthMenu = c(10, 10, 50,100), pageLength = 10)
     )
@@ -539,11 +568,22 @@ server <- function(input, output) {
   })    
 
  observeEvent(input$show5, {
+    hide("nuvem_de_palavras_chave")
+    show("painel_1")
     output$painel_1 =  renderDataTable(
      TiposDePublicacao()
      , options = list(lengthMenu = c(10, 10, 50,100), pageLength = 10) 
     )
   })  
+
+ observeEvent(input$show6, {
+    hide("painel_1")
+    show("nuvem_de_palavras_chave")
+    output$nuvem_de_palavras_chave =  renderPlot({ 
+       wordcloud(CriaMapaDePalavras() , max.words = 100, random.order = FALSE, colors=brewer.pal(8, "Dark2"))
+    })
+  })  
+
   # Fim Analise Bibliometrica
 
   output$out_tp_analysis = renderText({
