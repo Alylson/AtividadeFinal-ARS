@@ -147,19 +147,19 @@ TiposDePublicacao = function(){
 
 CriaMapaDePalavras = function() {
   d = my_papers_df$DE[!is.na(my_papers_df$DE)]
-  saida = Corpus(VectorSource(d))
+  conjunto_palavras = Corpus(VectorSource(d))
+  ##conjunto_palavras <- tm_map(saida, content_transformer(tolower))
+  ##conjunto_palavras <- tm_map(saida, removePunctuation)
+  ##conjunto_palavras <- tm_map(saida, PlainTextDocument)
+  ##conjunto_palavras <- tm_map(saida, removeWords, stopwords('english'))
+  ##conjunto_palavras <- tm_map(saida, stemDocument)
 
-  tdm <- TermDocumentMatrix(saida)
+  tdm <- TermDocumentMatrix(conjunto_palavras)
   matrix <- as.matrix(tdm)
   v <- sort(rowSums(matrix) , decreasing=TRUE )
   d <- data.frame(word = names(v) , freq=v)
 
   
-  ##saida <- tm_map(saida, content_transformer(tolower))
-  ##saida <- tm_map(saida, removePunctuation)
-  ##saida <- tm_map(saida, PlainTextDocument)
-  ##saida <- tm_map(saida, removeWords, stopwords('english'))
-  ##saida <- tm_map(saida, stemDocument)
 
   saida <- d$word
 }
@@ -532,6 +532,8 @@ server <- function(input, output) {
 
   # Analise Bibliometrica
   observeEvent(input$show0, {
+    hide("nuvem_de_palavras_chave")
+    show("painel_1")    
     output$painel_1 = renderDataTable(
 
      PublicacoesMaisReferenciadas() 
@@ -540,6 +542,8 @@ server <- function(input, output) {
   })
 
   observeEvent(input$show1, {
+    hide("nuvem_de_palavras_chave")
+    show("painel_1")    
     output$painel_1 =  renderDataTable(
      AutoresMaisCitados()  
      , options = list(lengthMenu = c(10, 10, 50,100), pageLength = 10) 
@@ -547,6 +551,8 @@ server <- function(input, output) {
   })  
   
  observeEvent(input$show2, {
+    hide("nuvem_de_palavras_chave")
+    show("painel_1")  
     output$painel_1 =  renderDataTable(
      PalavrasChavesMaisUtilizadas()  
      , options = list(lengthMenu = c(10, 10, 50,100), pageLength = 10) 
@@ -554,6 +560,8 @@ server <- function(input, output) {
   })  
  
  observeEvent(input$show3, {
+    hide("nuvem_de_palavras_chave")
+    show("painel_1")  
     output$painel_1 =  renderDataTable(
      LinguasPublicacao()
      , options = list(lengthMenu = c(10, 10, 50,100), pageLength = 10) 
@@ -561,6 +569,8 @@ server <- function(input, output) {
   })  
  
  observeEvent(input$show4, {
+    hide("nuvem_de_palavras_chave")
+    show("painel_1")  
     output$painel_1 =  renderDataTable(
      PeriodicosQueMaisPublicam()
      , options = list(lengthMenu = c(10, 10, 50,100), pageLength = 10) 
