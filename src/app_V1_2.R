@@ -1,0 +1,704 @@
+library(shiny)
+library(bibliometrix)
+#library(easyPubMed)
+#library(Cairo)
+library(igraph)
+library(igraphinshiny)
+options(shiny.maxRequestSize=30*1024^2) 
+options(shiny.port = 3000)
+Sys.setenv(LANG = "pt_BR.UTF-8")
+
+# Variaveis  ######
+#trab_df = data.frame() 
+#trab_analise_bbl = ""
+
+my_papers_df = data.frame()          # VARIÁVEL QUE ARMAZENA O DATAFRAME PRINCIPAL CONSTRUÍDO PELO BIBLIOMETRIX
+my_graph =""                         # VARIÁVEL QUE ARMAZENA O GRAFO GERADO 
+my_results = ""                      # VARIAVEL QUE ARMAZENA ANALISE FEITA PELO BIBLIOMETRIX
+my_NetMatrix = ""
+my_graph_metrics = data.frame()
+output_df = matrix()
+
+# Funcoes    ######
+
+###  Analise Bibliomtrica
+PublicacoesMaisReferenciadas = function (qtd=11){
+  CR <- citations(my_papers_df, field = "article", sep = ".  ")
+  publicacoes = capture.output(CR$Cited[2:qtd])
+  publicacao <- c()
+  qtd_citacoes <- c() 
+  i=1
+  saida = ""
+  j=2
+  while(j <= length(publicacoes)){
+    publicacao <- append(publicacao, publicacoes[j] )
+    qtd_citacoes <- append(qtd_citacoes , publicacoes[j+1])
+    print(i)
+    j=j+2
+    i=i+1
+  }
+  print(summary(output_df))
+  output_df <<- cbind("Publicação" = publicacao, "Quantidade Citações" = qtd_citacoes )
+  output_df 
+  
+}
+
+TransformaTextoEmDataframe = function(entrada){
+  my_dbsource = "isi" 
+  my_format = "plaintext" 
+  my_papers_df <<- convert2df(entrada, dbsource=my_dbsource, format=my_format) #definir formato e font
+  my_papers_df <<- metaTagExtraction(my_papers_df, Field = "AU_CO", sep = ";")
+  my_papers_df <<- metaTagExtraction(my_papers_df, Field = "CR_AU", sep = ";")
+  my_papers_df <<- metaTagExtraction(my_papers_df, Field = "CR_SO", sep = ";")
+  my_papers_df <<- metaTagExtraction(my_papers_df, Field = "AU_UN", sep = ";")
+  # VETOR DE TERMOS PARA EXTRAÇÃO
+  my_keep.terms <<- c()
+  # VETOR DE TERMOS A SER REMOVIDO
+  my_remove.terms <<- c()
+  # VETOR DE SINÔNIMOS
+  my_synonyms <<- c("study; studies", "system; systems", "library;libraries", "user;users","MODEL;MODELS" )
+  my_papers_df <<- termExtraction(my_papers_df, Field = "TI", synonyms=my_synonyms, remove.numbers=TRUE,  
+                                  remove.terms=my_remove.terms, keep.terms=my_keep.terms, verbose=FALSE)
+  my_papers_df <<- termExtraction(my_papers_df, Field = "AB", synonyms=my_synonyms, remove.numbers=TRUE,
+                                  remove.terms=my_remove.terms, keep.terms=my_keep.terms, verbose=FALSE)
+  my_papers_df <<- termExtraction(my_papers_df, Field = "DE", synonyms=my_synonyms, remove.numbers=TRUE,
+                                  remove.terms=my_remove.terms, keep.terms=my_keep.terms, verbose=FALSE)
+  my_papers_df <<- termExtraction(my_papers_df, Field = "ID", synonyms=my_synonyms, remove.numbers=TRUE,
+                                  remove.terms=my_remove.terms, keep.terms=my_keep.terms, verbose=FALSE)
+}
+
+CriaAnaliseBibliometrica = function() { 
+  my_results <<- biblioAnalysis(my_papers_df, sep = ";")
+}
+
+QuantidadePublicacoes = function(){ length(my_papers_df[[1]]) }
+
+TransformaDataframeEmGrafo = function(my_analysis, my_network, my_netDegree){
+  my_NetMatrix <<-""
+  my_graph <<-""
+  if (my_network=="history references"){
+    my_graph_his <-histNetwork(my_papers_df,sep = ";")
+    my_NetMatrix <- my_graph_his$NetMatrix
+  }
+  else
+  {
+    my_NetMatrix <- biblioNetwork(my_papers_df, analysis = my_analysis, network = my_network, sep = ";")
+  }
+  diag <- Matrix::diag 
+  my_NetMatrix <-as.matrix( my_NetMatrix[diag(my_NetMatrix) >= my_netDegree,diag(my_NetMatrix) >= my_netDegree])
+  #diag(my_NetMatrix) <- 0
+  #my_NetMatrix <<-my_NetMatrix
+  #my_graph <<- graph.adjacency(my_NetMatrix)
+  #my_graph <<- graph.adjacency(my_NetMatrix,mode = "directed")
+  my_graph <<-graph_from_adjacency_matrix(my_NetMatrix, weighted=TRUE,mode = "directed")
+  my_NetMatrix <<-my_NetMatrix
+  my_graph.description <<- paste ("Network of ",my_analysis," of ",my_network, " with threshold ", my_netDegree,". With ", vcount(my_graph), " nodes and ", ecount(my_graph), " edges.",  sep = "")
+  #my_graph.description
+}
+
+CalculaMedidasCentralidade = function(){
+  my_graph_metrics<<-""
+  my_graph_metrics<- data.frame(V(my_graph)$name)
+  my_graph_metrics["name"]<- data.frame(V(my_graph)$name)
+  
+  # Grau, grau de entrada e grau de saída
+  V(my_graph)$degree <- c(degree(my_graph))
+  my_graph_metrics["degree"]<-(V(my_graph)$degree)
+  my_graph.degree.summary <<- summary(V(my_graph)$degree)
+  my_graph.degree.sd <<-sd(V(my_graph)$degree)
+  my_graph.degree.var <<-var(V(my_graph)$degree)
+  
+  # Grau de entrada
+  V(my_graph)$indegree <- c(degree(my_graph, mode = "in"))
+  my_graph_metrics["indegree"]<-(V(my_graph)$indegree)
+  my_graph.indegree.summary <<-summary(V(my_graph)$indegree)
+  my_graph.indegree.sd <<-sd(V(my_graph)$indegree)
+  my_graph.indegree.var <<-var(V(my_graph)$indegree)
+  
+  # Grau de saida 
+  V(my_graph)$outdegree <- c(degree(my_graph, mode = "out"))
+  my_graph_metrics["outdegree"] <- (V(my_graph)$outdegree)
+  my_graph.outdegree.summary <<-summary(V(my_graph)$outdegree)
+  my_graph.outdegree.sd <<-sd(V(my_graph)$outdegree)
+  my_graph.outdegree.var <<-var(V(my_graph)$outdegree)
+  my_graph_metrics<<-my_graph_metrics
+  # 4.2 Força dos vértices
+  # Força = força de entrada + força de saída
+  V(my_graph)$strengh <- c(graph.strength(my_graph))
+  my_graph_metrics["strengh"]<- (V(my_graph)$strengh)
+  my_graph.strengh.summary <<-summary(V(my_graph)$strengh)
+  my_graph.strengh.sd <<-sd(V(my_graph)$strengh)
+  
+  # Força de entrada
+  V(my_graph)$instrengh <- c(graph.strength(my_graph, mode =c("in")))
+  my_graph_metrics["instrengh"]<- (V(my_graph)$instrengh)
+  my_graph.instrengh.summary <<-summary(V(my_graph)$instrengh )
+  my_graph.instrengh.sd <<-sd(V(my_graph)$instrengh )
+  my_graph.instrengh.var <<-var(V(my_graph)$instrengh)
+  
+  # Força de saída
+  V(my_graph)$outstrengh <- c(graph.strength(my_graph, mode =c("out")))
+  my_graph_metrics["outstrengh"]<- (V(my_graph)$outstrengh)
+  my_graph.outstrengh.summary <<-summary(V(my_graph)$outstrengh)
+  my_graph.outstrengh.sd <<-sd(V(my_graph)$outstrengh)
+  
+  # 4.7 log log
+  my_graph.degree.distribution <<- c(degree.distribution(my_graph))
+  my_d <<- 1:max(V(my_graph)$degree)-1
+  my_ind <<- (V(my_graph)$degree.distribution != 0) 
+  
+  #4.8 - knn Calculate the average nearest neighbor degree of the given vertices and the same quantity in the function of vertex degree
+  #my_graph.a.nn.deg <<- graph.knn(my_graph,V(my_graph))$knn
+  
+  # Diameter - distância geodesica
+  my_graph.diameter <<-diameter(my_graph, directed = TRUE, unconnected=TRUE, weights = NULL)
+  
+  ##Retorna os caminho com diametro atual
+  my_graph.get_diameter <<-get_diameter(my_graph)
+  
+  ##Retorna os 2 vértices que são conectados pelo diâmetro
+  my_graph.farthest_vertices <<-farthest_vertices(my_graph)
+  
+  # 4.Proximidade - A centralidade de proximidade mede quantas etapas são necessárias para acessar cada outro vértice de um determinado vértice.
+  V(my_graph)$closeness <- c(closeness(my_graph))
+  my_graph_metrics["closeness"]<-(V(my_graph)$closeness)
+  my_graph.closeness <<- centralization.closeness(my_graph)
+  my_graph.closeness.res.sumary <<- summary (my_graph.closeness$res)
+  my_graph.closeness.res.sd <<-sd(my_graph.closeness$res)
+  
+  # 4.Intermediação
+  V(my_graph)$betweenness <- betweenness(my_graph)
+  my_graph_metrics["betweenness"]<- (V(my_graph)$betweenness)
+  my_graph.betweenness <<- centralization.betweenness(my_graph)
+  my_graph.betweenness.res.sumary <<-summary (my_graph.betweenness$res)
+  my_graph.betweenness.res.sd <<-sd(my_graph.betweenness$res)
+  
+  # 4.Excentricidade
+  V(my_graph)$eccentricity <-eccentricity(my_graph)
+  my_graph_metrics["eccentricity"]<- (V(my_graph)$eccentricity)
+  my_graph.eccentricity.sumary <<- summary (V(my_graph)$eccentricity)
+  my_graph.eccentricity.sd <<-sd(V(my_graph)$eccentricity)
+  
+  # 4.eigen_centrality
+  my_graph.eigen <<-eigen_centrality(my_graph)
+  
+  # 4.Densidade
+  my_graph.density <<-graph.density(my_graph)
+  
+  # Modularidade
+  wtc <- cluster_walktrap(my_graph)
+  #modularity(wtc)
+  my_graph.modularity <<-modularity(my_graph, membership(wtc))
+  my_graph.modularity.matrix <<-modularity_matrix(my_graph,membership(wtc))
+  
+  # Page Rank
+  V(my_graph)$pagerank <-(page.rank(my_graph))$vector
+  my_graph_metrics["pagerank"]<- (V(my_graph)$pagerank)
+  #Clusterring
+  my_graph_clusters <<-clusters(my_graph, mode="strong" )
+  
+  V(my_graph)$clustering <-(clusters(my_graph))$membership
+  my_graph_metrics$clustering<- data.frame(V(my_graph)$clustering)
+}
+
+ImprimeGrau = function(){
+  #
+  # GRAU DOS VERTICES
+  hist(my_graph.degree,col="lightblue",xlim=c(0, max(my_graph.degree)),xlab="Grau dos vértices", ylab="Frequência", main="", axes="TRUE")
+  legend("topright", c(paste("Mínimo =", round(my_graph.degree.summary[1],2)), 
+                       paste("Máximo=", round(my_graph.degree.summary[6],2)), 
+                       paste("Média=", round(my_graph.degree.summary[4],2)),
+                       paste("Mediana=", round(my_graph.degree.summary[3],2)),
+                       paste("Desvio Padrão=", round(my_graph.degree.sd[1],2))),
+         pch = 1, title = "Grau")
+  
+  # GRAU DE ENTRADA
+  hist(my_graph.indegree,col="lightblue", xlab="Grau de entrada", ylab="Frequência", main="", axes="TRUE")
+  legend("topright", c(paste("Mínimo =", round(my_graph.indegree.summary[1],2)), 
+                       paste("Máximo=", round(my_graph.indegree.summary[6],2)), 
+                       paste("Média=", round(my_graph.indegree.summary[4],2)),
+                       paste("Mediana=", round(my_graph.indegree.summary[3],2)),
+                       paste("Desvio Padrão=", round(my_graph.indegree.sd[1],2))),
+         pch = 1, title = "Grau entrada")
+  
+  # GRAU DE SAÍDA
+  hist(my_graph.outdegree,col="lightblue", xlab="Grau de saída", ylab="Frequência", main="", axes="TRUE")
+  legend("topright", c(paste("Mínimo =", round(my_graph.outdegree.summary[1],2)), 
+                       paste("Máximo=", round(my_graph.outdegree.summary[6],2)), 
+                       paste("Média=", round(my_graph.outdegree.summary[4],2)),
+                       paste("Mediana=", round(my_graph.outdegree.summary[3],2)),
+                       paste("Desvio Padrão=", round(my_graph.outdegree.sd[1],2))),
+         pch = 1, title = "Grau saída")
+  
+  # BOXPLOT: GRAU ENTRADA, GRAU SAÍDA E GRAU TOTAL
+  boxplot(my_graph.indegree, my_graph.outdegree, my_graph.degree, notch = FALSE, ylab = 'Grau', 
+          names = c('Grau entrada', 'Grau saída', 'Grau total'), 
+          main = 'Boxplot do grau dos vértices', col = c('blue', 'red', 'orange'),shrink=0.8, textcolor="red")
+  
+}
+
+##ConvArqParaDataFrame = function(entrada){
+##  trab_df <<- convert2df(entrada, dbsource="isi", format="plaintext")
+##  trab_analise_bbl <<- biblioAnalysis(trab_df, sep = ";"
+
+##}
+
+
+
+ui <- fluidPage(
+  titlePanel("Análise de Redes de Colaboração Científica com R"),
+  
+  tabsetPanel(
+    tabPanel("Apresentação", 
+             fluidRow(
+               column(3,
+                      br() ,
+                      br() ,
+                      br() ,
+                      br() ,
+                      br() ,
+                      img(src = 'r_logo.png', height = '300px', width = '300px')
+                      
+               ),
+               column(6,
+                      h3("Atividade Final da Disciplina"),
+                      p("Objetivo: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque porttitor nibh ligula, in mattis massa fringilla nec. Curabitur luctus mauris ac mauris venenatis ullamcorper. Duis porta urna mauris, quis varius est aliquam id. Morbi lacinia odio ut nisl posuere cursus eu at dui. Aenean neque lorem, commodo ut pharetra vel, pellentesque ut nisi. Etiam ullamcorper facilisis tortor vitae suscipit. Sed bibendum ex vitae ultricies aliquet."),
+                      br(),
+                      br(),
+                      br("Professor Ricardo Barros"),
+                      h3("Grupo 1:"),
+                      p("Jerônimo Avelar Filho"),
+                      p("Lena Lúcia de Moraes"),
+                      p("Leda Alves")
+               ) ,
+               column(3,"")
+             )
+             
+    ) ,           
+    tabPanel("Informações Bibliométricas", 
+             sidebarPanel( 
+               fileInput("arqtrab", "Selecione arquivo WoS", multiple = FALSE, accept = NULL, width = NULL,
+                         buttonLabel = "Browse...", placeholder = "No file selected") ,
+               textOutput('dadosArquivo'),  
+               actionButton("show0", "Publicaçoes mais referenciadas" , class = "btn-primary btn-block"  ),
+               actionButton("show1", "Exibir painel de mensagens", class = "btn-primary  btn-block"  ),
+               actionButton("show2", "Exibir painel de mensagens", class = "btn-primary  btn-block"  ),
+               actionButton("show3", "Exibir painel de mensagens" , class = "btn-primary  btn-block" )
+             ) ,
+             mainPanel(    
+               tableOutput('painel_1') 
+             )    
+             
+             
+             
+    ),
+    
+    tabPanel("Criação da rede",
+             sidebarLayout(
+               sidebarPanel(column(12,
+                                   isolate(selectInput("in_tp_analysis", "Escolha o tipo de análise:",
+                                                       list(`COLABORAÇÃO` = c("Colaboração Autores", "Colaboração Países", "Colaboração Instituições"),
+                                                            `CITAÇÃO` = c("Citação Documetos", "Citação Autores", "Citação Fontes", "Citação Países"),
+                                                            `CO-CITAÇÃO` = c("Co-citação Documentos", "Co-citação Autores", "Co-citação Fontes", "Co-citação Histórico Referências"),
+                                                            `CO-OCORRÊNCIA` = c("Co-ocorrência Autores", "Co-ocorrência Fontes", "Co-ocorrência Palavra-chave","Co-ocorrência Palavra-chave autor", "Co-ocorrência Título", "Co-ocorrência Resumo")
+                                                       ))),
+                                   isolate(selectInput("in_tp_layout", "Escolha o layout:",
+                                                       c("Estrela" ="star",
+                                                         "Círculo" ="circle", ## coords <- layout_in_circle(karate, order = order(membership(karate_groups)))
+                                                         "Multidimensional" ="mds", #layout_with_mds(g) layout_nicely(graph, dim = 2, ...)
+                                                         "Amigável" ="nicely",# layout_nicely(graph, dim = 2, ...
+                                                         "With dh" ="With_dh",# # plot(g_8, layout=layout_with_dh, vertex.size=5, vertex.label=NA)
+                                                         "With Gem" ="with_gem",# plot(g, layout=layout_with_gem)
+                                                         "Grid" ="on_grid",# plot(g, layout=layout_on_grid) rglplot(g, layout=layout_on_grid(g, dim = 3))
+                                                         "Esfera" ="layout.sphere",
+                                                         "Kamada kawai"="layout.kamada.kawai", # plot(g, layout=layout_with_kk, edge.label=E(g)$weight)
+                                                         "Fruchterman-Reingold" ="layout.fruchterman.reingold",
+                                                         "Lgl"='layout.lgl',
+                                                         "Árvore" ="tree"#plot(tree, layout=layout_as_tree(tree, circular=TRUE))
+                                                      
+                                                       ))),    
+                                   # isolate(selectInput('in_tp_com', 'Visualizar Comunidades:',
+                                   #                     c('Componente gigante'='comp_gigante',
+                                   #                       'Diferenciar subgrupos pela cor'='sub_grupo',
+                                   #                       'Nao destacar'='nao_dest'))),
+                                   isolate(checkboxInput('in_tp_cluster', "Visualizar clusters",FALSE)),
+                                   isolate(checkboxInput('in_tp_gigante', "Visualizar componente gigante",FALSE)),
+                                   isolate(checkboxInput('in_tp_linha', "Espessura das arestas de acordo com o peso",FALSE)),
+                                   #isolate(checkboxInput('in_st_exibe_diametro', "Destacar diâmetro",FALSE)),
+                                   # isolate(selectInput('in_tp_linha', 'Espessura da linha de acordo com o peso:',
+                                   #                     c('Sim'='linha_com_peso',
+                                   #                       'Nao'='linha_normal'))),
+                                   isolate(radioButtons('in_tp_dim','Dimensionar nós de acordo com:',
+                                                       c('Grau'= 'all',
+                                                         'Grau de entrada'='in',
+                                                         'Grau de saída'='out')
+                                                         )),
+                                   # isolate(selectInput('in_tp_cor','Colorir nos de acordo com:',
+                                   #                     c('Numero de Publicacoes'='num_pub',
+                                   #                       'Numero de Citacoes'='num_citacao',
+                                   #                       'Todos os nos da mesma cor'='no_nao_colorido'))),
+                                   isolate(numericInput("in_num_freq", "Escolha o treshold da rede:",1,1, 100, 1)),
+                                   isolate(actionButton("in_cria_rede", "Gera Rede"))
+                          )#fim columm
+               
+               ),
+               mainPanel(
+                 tabsetPanel(
+                   tabPanel("Plot",plotOutput("out_plot_net")),
+                   tabPanel("Summary",verbatimTextOutput("info")), 
+                   tabPanel("Dados", dataTableOutput('out_table_graph'))
+                 )
+               )
+             )
+    ) ,    
+    tabPanel("Estatísticas da Rede",
+             sidebarLayout(
+               sidebarPanel(column(12,
+                                   radioButtons("in_tp_metrica", "Escolha a métrica:",
+                                                c("Grau médio" = "netdegree",
+                                                  "Grau ponderado médio" = "strength",
+                                                  "Diâmetro da rede" = "diameter",
+                                                  "Densidade do grafo" = "density",
+                                                  "Modularidade" = "modularity",
+                                                  "PageRank" = "pagerank",
+                                                  "Componentes conectados" = "collaborationUniversities",
+                                                  "Coeficiente de clustering médio" = "clustering",
+                                                  "Centralidade de autovetor" = "eigen",
+                                                  "Comprimento médio de caminho" = "strength")),
+                                   #"Componentes conectados" = "collaborationUniversities",
+                                   #"Coeficiente de clustering médio" = "strength",
+                                   #"Centralidade de autovetor" = "collaborationUniversities",
+                                   textOutput('out_tp_metrica'),
+                                   "Teste2")
+                            
+               ),
+               mainPanel(
+                 tabsetPanel(
+                   tabPanel("Plot",plotOutput("out_plot_degree")), 
+                   tabPanel("Summary", plotOutput("out_plot_indegree")), 
+                   tabPanel("Dados", dataTableOutput('out_table_metrics'))
+               )
+             )
+          )  
+    ) ,
+    
+    tabPanel("Inspeção visual"
+             
+    ) 
+    
+  )
+)
+server <- function(input, output) {
+  
+  output$dadosArquivo = renderText({
+    arquivoEntrada <- input$arqtrab
+    if (is.null(arquivoEntrada))
+      return(NULL)
+    observacoes = readLines(arquivoEntrada$datapath)
+    TransformaTextoEmDataframe(observacoes)
+    CriaAnaliseBibliometrica()
+    print(paste("Quantidade de Publicações lidas: ", QuantidadePublicacoes()))
+    
+    #my_analysis <<- "collaboration"
+    #my_network <<- "authors"
+    #my_netDegree <<- 1 
+    #TransformaDataframeEmGrafo(my_analysis, my_network, my_netDegree)
+    #CalculaMedidasCentralidade()
+    
+  })
+  
+  observeEvent(input$show0, {
+    output$painel_1 = renderTable({ 
+      PublicacoesMaisReferenciadas() 
+    })
+  })
+  
+  observeEvent(input$show1, {
+    showModal(modalDialog(
+      title = "Saida de Dados para o evento 1 ",
+      "Dados para Exibicao ",
+      easyClose = TRUE,
+      footer = NULL
+    ))
+  })
+  
+  observeEvent(input$in_cria_rede,{
+    output$out_table_graph = renderDataTable({
+      dd <-my_graph_metrics[c("name","degree","indegree","outdegree")]
+      dd[order(-dd$degree),]
+    }, options = list(lengthMenu = c(10, 20, 50,100), pageLength = 10))
+  })
+  
+  observeEvent(input$in_cria_rede, {
+    output$out_plot_net = renderPlot({
+      if (isolate(input$in_tp_analysis)=="Colaboração Autores"){
+        my_analysis <- "collaboration"
+        my_network <- "authors"
+      }
+      if (isolate(input$in_tp_analysis)=="Colaboração Países"){
+        my_analysis <- "collaboration"
+        my_network <- "countries"
+      }
+      if (isolate(input$in_tp_analysis)=="Colaboração Instituições"){
+        my_analysis <- "collaboration"
+        my_network <- "universities"
+      }
+      if (isolate(input$in_tp_analysis)=="Citação Documetos"){
+        my_analysis <- "coupling"
+        my_network <- "references"
+      }
+      if (isolate(input$in_tp_analysis)=="Citação Autores"){
+        my_analysis <- "coupling"
+        my_network <- "authors"
+      }
+      if (isolate(input$in_tp_analysis)=="Citação Fontes"){
+        my_analysis <- "coupling"
+        my_network <- "sources"
+      }
+      if (isolate(input$in_tp_analysis)=="Citação Países"){
+        my_analysis <- "coupling"
+        my_network <- "countries"
+      }
+      if (isolate(input$in_tp_analysis)=="Co-citação Documentos"){
+        my_analysis <- "co-citation"
+        my_network <- "references"
+      }
+      if (isolate(input$in_tp_analysis)=="Co-citação Autores"){
+        my_analysis <- "co-citation"
+        my_network <- "authors"
+      }
+      if (isolate(input$in_tp_analysis)=="Co-citação Fontes"){
+        my_analysis <- "co-citation"
+        my_network <- "sources"
+      }
+      if (isolate(input$in_tp_analysis)=="Co-citação Histórico Referências"){
+        my_analysis <- "co-citation"
+        my_network <- "history references"
+      }
+      if (isolate(input$in_tp_analysis)=="Co-ocorrência Autores"){
+        my_analysis <- "co-occurrences"
+        my_network <- "authors"
+      }
+      if (isolate(input$in_tp_analysis)=="Co-ocorrência Fontes"){
+        my_analysis <- "co-occurrences"
+        my_network <- "sources"
+      }
+      if (isolate(input$in_tp_analysis)=="Co-ocorrência Palavra-chave"){
+        my_analysis <- "co-occurrences"
+        my_network <- "keywords"
+      }
+      if (isolate(input$in_tp_analysis)=="Co-ocorrência Palavra-chave autor"){
+        my_analysis <- "co-occurrences"
+        my_network <- "author_keywords"
+      }
+      if (isolate(input$in_tp_analysis)=="Co-ocorrência Título"){
+        my_analysis <- "co-occurrences"
+        my_network <- "titles"
+      }
+      if (isolate(input$in_tp_analysis)=="Co-ocorrência Resumo"){
+        my_analysis <- "co-occurrences"
+        my_network <- "abstracts"
+      }
+      
+      my_analysis <<- my_analysis
+      my_network <<- my_network
+      my_netDegree <<- isolate(input$in_num_freq)
+      TransformaDataframeEmGrafo(my_analysis, my_network, my_netDegree)
+      CalculaMedidasCentralidade()
+      
+
+      # if (isolate(input$in_st_exibe_diametro)==TRUE){
+      #   if (length(diameter(my_graph)>=2)){
+      #     my_graph.nodes.diameter<-get.diameter(my_graph)
+      #     V(my_graph)[my_graph.nodes.diameter]$color<-"darkgreen"
+      #     V(my_graph)[my_graph.nodes.diameter]$size<-10
+      #     V(my_graph)[my_graph.nodes.diameter]$label.color<-"white"
+      #     E(my_graph)$color<-"grey"
+      #     E(my_graph,my_graph.nodes.diameter)$color<-"darkgreen"
+      #     E(my_graph,my_graph.nodes.diameter)$width<-2
+      #     #Edges in the diameter will be darkgreen and a little extra wide
+      #   }
+      # }
+      # else{
+      #   E(my_graph)$color<-"grey"
+      # }
+      
+      # karate_groups <- cluster_optimal(karate)
+      # coords <- layout_in_circle(karate, order = order(membership(karate_groups)))
+      # V(karate)$label <- sub("Actor ", "", V(karate)$name)
+      # V(karate)$label.color <- membership(karate_groups)
+      # V(karate)$shape <- "none"
+      # plot(karate, layout = coords)
+      
+      if (isolate (input$in_tp_linha)==TRUE){
+        E(my_graph)$width <- E(my_graph)$weight/mean(E(my_graph)$weight)
+        my_graph.description <<-paste (my_graph.description, " Edges width with weight.", sep = "")
+      }
+      else{
+        E(my_graph)$width <- 1
+      }
+      
+      if (isolate (input$in_tp_dim)=="in"){
+        V(my_graph)$size<-my_graph_metrics$indegree * 0.5  
+        my_graph.description <<- paste (my_graph.description, " Dimension node with indegree.",  sep = "")
+      }
+      else if (isolate (input$in_tp_dim)=="out"){
+        V(my_graph)$size<--my_graph_metrics$outdegree * 0.5 
+        my_graph.description <<- paste (my_graph.description, "Dimension node with outdegree.",sep = "")
+      }
+      else {
+            V(my_graph)$size<-my_graph_metrics$degree * 0.5 
+            my_graph.description <<- paste (my_graph.description, " Dimension node with degree.", sep = "")
+      }
+      
+      if (isolate (input$in_tp_cluster)==TRUE){
+        V(my_graph)$color <- rainbow(my_graph_clusters$no)[my_graph_clusters$membership]
+        my_graph.description <<- paste (my_graph.description, " Number of clusters:", my_graph_clusters$no, ".", sep = "")
+      }
+      else{
+        V(my_graph)$color <- "orange"
+      }
+      
+      if (isolate (input$in_tp_gigante)==TRUE){
+        comp_gigante = which(my_graph_clusters$membership == which.max(my_graph_clusters$csize))
+        V(my_graph)[comp_gigante]$color = "#00FFFF"
+      }
+      
+        coords <- as.matrix(layout_(my_graph, as_star()))
+        my_coords<-norm_coords(coords, xmin = -1, xmax = 1, ymin = -1, ymax = 1, zmin = -1, zmax = 1)
+        
+        if (isolate (input$in_tp_layout)=="star"){
+          coords <- as.matrix(layout_(my_graph, as_star()))
+          my_coords<-norm_coords(coords, xmin = -1, xmax = 1, ymin = -1, ymax = 1, zmin = -1, zmax = 1)
+        }
+        if (isolate (input$in_tp_layout)=="tree"){
+        coords <-as.matrix(layout_as_tree(my_graph, circular=TRUE))
+        my_coords<-norm_coords(coords, xmin = -1, xmax = 1, ymin = -1, ymax = 1, zmin = -1, zmax = 1)
+        }
+        if (isolate (input$in_tp_layout)=="circle"){ ## coords <- layout_in_circle(karate, order = order(membership(karate_groups)))
+          coords <- as.matrix( layout_in_circle(my_graph))
+          my_coords<-norm_coords(coords, xmin = -1, xmax = 1, ymin = -1, ymax = 1, zmin = -1, zmax = 1)
+        }
+        if (isolate (input$in_tp_layout)=="mds"){ #layout_with_mds(g) layout_nicely(graph, dim = 2, ...)
+          coords <- as.matrix( layout_with_mds(my_graph))
+          my_coords<-norm_coords(coords, xmin = -1, xmax = 1, ymin = -1, ymax = 1, zmin = -1, zmax = 1)
+        }
+        if (isolate (input$in_tp_layout)=="nicely"){ #layout_nicely(graph, dim = 2, ...
+          coords <- as.matrix( layout_nicely(my_graph))
+          my_coords<-norm_coords(coords, xmin = -1, xmax = 1, ymin = -1, ymax = 1, zmin = -1, zmax = 1)
+        }
+        if (isolate (input$in_tp_layout=="With_dh")){ #plot(g_8, layout=layout_with_dh, vertex.size=5, vertex.label=NA)
+          coords <- as.matrix( layout_with_dh(my_graph))
+          my_coords<-norm_coords(coords, xmin = -1, xmax = 1, ymin = -1, ymax = 1, zmin = -1, zmax = 1)
+        }
+        if (isolate (input$in_tp_layout)=="with_gem"){ #plot(g, layout=layout_with_gem)
+          coords <- as.matrix( layout_with_gem(my_graph))
+          my_coords<-norm_coords(coords, xmin = -1, xmax = 1, ymin = -1, ymax = 1, zmin = -1, zmax = 1)
+        }
+        if (isolate (input$in_tp_layout)=="on_grid"){ # plot(g, layout=layout_on_grid) rglplot(g, layout=layout_on_grid(g, dim = 3))
+          coords <- as.matrix(layout_on_grid(my_graph))
+          my_coords<-norm_coords(coords, xmin = -1, xmax = 1, ymin = -1, ymax = 1, zmin = -1, zmax = 1)
+        }
+        if (isolate (input$in_tp_layout)=="layout.kamada.kawai"){ ## plot(g, layout=layout_with_kk, edge.label=E(g)$weight)
+          coords <- as.matrix( layout_with_kk(my_graph))
+          my_coords<-norm_coords(coords, xmin = -1, xmax = 1, ymin = -1, ymax = 1, zmin = -1, zmax = 1)
+        }
+        if (isolate (input$in_tp_layout)=="Fruchterman-Reingold"){
+          coords <- as.matrix(layout.fruchterman.reingold(my_graph))
+          my_coords<-norm_coords(coords, xmin = -1, xmax = 1, ymin = -1, ymax = 1, zmin = -1, zmax = 1)
+        }
+        if (isolate (input$in_tp_layout)=="layout.sphere"){
+          coords <- as.matrix(layout_on_sphere(my_graph))
+          my_coords<-norm_coords(coords, xmin = -1, xmax = 1, ymin = -1, ymax = 1, zmin = -1, zmax = 1)
+        }
+        
+        my_graph.description <<- paste (my_graph.description, " Layout ",isolate (input$in_tp_layout), ".",sep = "")
+        #dev.off()
+        plot.new()
+        par(mar=c(.1,.1,.1,.1))
+        plot(my_graph,
+             edge.arrow.size=0.5, 
+             #edge.color = "grey",
+             edge.curved= 0,
+             layout = my_coords,#layout.fruchterman.reingold,
+             #vertex.color=V(my_graph)$color,
+             vertex.frame.color = 'black',
+             vertex.label.dist = 0,
+             #vertex.size = V(my_graph)$size,
+             vertex.label.color = 'black',
+             vertex.label.font = 15, 
+             #vertex.label = V(my_graph)$name, 
+             vertex.label.cex = 0.5)
+  })
+  })
+  
+  observeEvent(input$in_cria_rede,{
+    output$out_table_metrics = renderDataTable({
+      # dd[ order(-dd[,4], dd[,1]), ]
+      dd <-my_graph_metrics[c("name","degree","indegree","outdegree")]
+      dd[order(-dd$degree),]
+    }, options = list(lengthMenu = c(10, 20, 50,100), pageLength = 10))
+  })
+  
+  output$out_plot_degree <- renderPlot({
+    if (input$in_tp_metrica=="netdegree"){
+      #hist(V(my_graph)$degree,col="lightblue",xlim=c(0, max(V(my_graph)$degree)),xlab="Grau dos vértices", ylab="Frequência", main="", axes="TRUE")
+      hist(my_graph_metrics$degree,col="lightblue",xlim=c(0, max(my_graph_metrics$degree)),xlab="Grau dos vértices", ylab="Frequência", main="", axes="TRUE")
+      legend("topright", c(paste("Mín.=", round(my_graph.degree.summary[1],2)),
+                           paste("Máx.=", round(my_graph.degree.summary[6],2)),
+                           paste("Média=", round(my_graph.degree.summary[4],2)),
+                           paste("Mediana=", round(my_graph.degree.summary[3],2)),
+                           paste("D. padrão=", round(my_graph.degree.sd[1],2))),
+             pch = 1, title = "Grau")
+    }
+  })
+  
+  observeEvent(input$in_cria_rede,{
+    output$info = renderPrint({
+      my_graph.description
+      print(my_graph.description)
+      #print(paste("Network of",my_analysis,"of",my_network, "with threshold:", my_netDegree,"G=(", vcount(my_graph), ",", ecount(my_graph), ")."))
+      # paste0("x=", input$plot_click$x, "\ny=", input$plot_click$y)
+    })
+  })
+  
+  output$out_plot_indegree <- renderPlot({
+    if (input$in_tp_metrica=="netdegree"){
+      hist(my_graph_metrics$indegree,col="lightblue", xlab="Grau de entrada", ylab="Frequência", main="", axes="TRUE")
+      legend("topright", c(paste("Mínimo =", round(my_graph.indegree.summary[1],2)), 
+                           paste("Máximo=", round(my_graph.indegree.summary[6],2)), 
+                           paste("Média=", round(my_graph.indegree.summary[4],2)),
+                           paste("Mediana=", round(my_graph.indegree.summary[3],2)),
+                           paste("D. Padrão=", round(my_graph.indegree.sd[1],2))),
+             pch = 1, title = "Grau entrada")
+    }
+  })
+  
+  output$out_plot_outdegree <- renderPlot({
+    if (input$in_tp_metrica=="netdegree"){
+      hist(my_graph_metrics$outdegree,col="lightblue", xlab="Grau de saída", ylab="Frequência", main="", axes="TRUE")
+      legend("topright", c(paste("Mínimo =", round(my_graph.outdegree.summary[1],2)), 
+                           paste("Máximo=", round(my_graph.outdegree.summary[6],2)), 
+                           paste("Média=", round(my_graph.outdegree.summary[4],2)),
+                           paste("Mediana=", round(my_graph.outdegree.summary[3],2)),
+                           paste("D.Padrão=", round(my_graph.outdegree.sd[1],2))),
+             pch = 1, title = "Grau saída")
+    }
+  })
+  
+  output$out_plot_boxdegree <- renderPlot({
+    if (input$in_tp_metrica=="netdegree"){
+      boxplot(my_graph_metrics["indegree"], my_graph_metrics["outdegree"], my_graph_metrics["degree"], notch = FALSE, ylab = 'Grau', 
+              names = c('Grau entrada', 'Grau saída', 'Grau total'), 
+              main = '', col = c('blue', 'red', 'orange'),shrink=0.8, textcolor="red")
+    }
+  })
+} 
+
+# sem isso nao consegue carregar graficos do diretorio www
+# os arquivos de imagem precisam estar com permissao 664
+#shinyAppDir(".")
+shinyAppDir(".")
+
+shinyApp(ui = ui, server = server)
+
