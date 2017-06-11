@@ -72,6 +72,45 @@ AutoresMaisCitados = function(n=10,ano="Todos"){
   saida
 }
 
+
+PalavrasChavesMaisUtilizadas = function(n=10, ano = "Todos"){
+  print("Inicio PalavrasChavesMaisUtilizadas")
+  pc = c()
+  analise = my_papers_df$DE
+  if(ano != "Todos"){
+    analise = my_papers_df$DE[my_papers_df$PY == ano]
+  }
+  if(n == "Todos"){
+    n = length(my_papers_df$PY)
+  }
+  for(i in analise){
+    for(j in strsplit(i, ";")){
+        pc = c(pc, trimws(j))
+    }
+  }
+  pc = pc[pc != ""]
+  x= sort(table(pc), decreasing = TRUE)
+  pc = names(x)
+  valores = c(as.vector(x))
+  saida <- data.frame(pc,valores)
+  names(saida) <- c("Palavras Chave" , "Quantidade de utilizações")
+  print("Fim PalavrasChavesMaisUtilizadas")
+
+  saida
+}
+
+LinguasPublicacao = function(){
+  print("Inicio LinguasPublicacao")
+  x= sort(table (my_papers_df$LA), decreasing = TRUE)
+  linguas = c(names(x))
+  valores = c(as.vector(x))
+  
+  saida <- data.frame(linguas,valores)
+  names(saida) <- c("Lingua" , "Quantidade de Publicações")
+  print("Fim LinguasPublicacao")
+  saida
+}
+
 ###  Fim Analise Bibliomtrica
 
 
@@ -306,8 +345,8 @@ ui <- fluidPage(
         textOutput('dadosArquivo'),  
         actionButton("show0", "Publicaçoes mais referenciadas" , class = "btn-primary btn-block"  ),
         actionButton("show1", "Autores Mais Citados", class = "btn-primary  btn-block"  ),
-        actionButton("show2", "Exibir painel de mensagens", class = "btn-primary  btn-block"  ),
-        actionButton("show3", "Exibir painel de mensagens" , class = "btn-primary  btn-block" )
+        actionButton("show2", "Palavras Chaves Mais Utilizadas", class = "btn-primary  btn-block"  ),
+        actionButton("show3", "Linguas mais utilizadas para publicacao" , class = "btn-primary  btn-block" )
       ) ,
       mainPanel(    
         dataTableOutput('painel_1')
@@ -431,6 +470,7 @@ server <- function(input, output) {
     
   })
 
+  # Analise Bibliometrica
   observeEvent(input$show0, {
     output$painel_1 = renderDataTable(
      PublicacoesMaisReferenciadas() 
@@ -445,7 +485,22 @@ server <- function(input, output) {
     )
   })  
   
+ observeEvent(input$show2, {
+    output$painel_1 =  renderDataTable(
+     PalavrasChavesMaisUtilizadas()  
+     , options = list(lengthMenu = c(10, 10, 50,100), pageLength = 10) 
+    )
+  })  
+ 
+ observeEvent(input$show3, {
+    output$painel_1 =  renderDataTable(
+     LinguasPublicacao()
+     , options = list(lengthMenu = c(10, 10, 50,100), pageLength = 10) 
+    )
+  })  
   
+  # Fim Analise Bibliometrica
+
   output$out_tp_analysis = renderText({
     input$in_tp_analysis
   })
