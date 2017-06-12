@@ -927,31 +927,41 @@ server <- function(input, output) {
   
   #diametro da rede#
 
-  if (input$in_tp_metrica=="diameter"){  
-      output$out_tp_metrica <- renderText({paste("Diâmetro da Rede: ", my_graph.diameter)
+  observeEvent(input$in_tp_metrica,{
+    if (input$in_tp_metrica=="diameter"){  
+      output$out_tp_metrica <- renderText({paste("Di?metro da Rede: ", my_graph.diameter)
       })
-  }
+    }
+  })  
+  
+  
 
   #densidade da rede#
   
+  observeEvent(input$in_tp_metrica,{
   if (input$in_tp_metrica=="density"){  
     output$out_tp_metrica <- renderText({paste("Densidade da Rede: ", my_graph.density)
     })
-  }       
+  }   
+  })  
   
   #modularidade da rede #
-          
+       
+  observeEvent(input$in_tp_metrica,{   
   if (input$in_tp_metrica=="modularity"){  
     output$out_tp_metrica <- renderText({paste("Modularidade da Rede: ", my_graph.modularity)
     })
   }
- 
+  })
+    
  # Page Rank da rede #
               
+  observeEvent(input$in_tp_metrica,{
   if (input$in_tp_metrica=="pagerank"){  
     output$out_tp_metrica <- renderText({paste("PageRank: ",my_graph_metrics["pagerank"] )
     })
   }
+  })
 
   # Componentes Conectados #
  
@@ -961,19 +971,21 @@ server <- function(input, output) {
    #  }
    
    # Coeficiente de Clustering Medio #
-  
+  observeEvent(input$in_tp_metrica,{
   if (input$in_tp_metrica=="clustering"){  
     output$out_tp_metrica <- renderText({paste("Coeficiente de Clustering Médio: ",my_graph_metrics$clustering)
     })
   }
-  
+  })
+    
+     
   # Centralidade de Auto Vetor #
-  
+  observeEvent(input$in_tp_metrica,{
   if (input$in_tp_metrica=="eigen"){  
     output$out_tp_metrica <- renderText({paste("Centralidade de Auto Vetor: ", my_graph.eigen)
     })
   }
- 
+  })
    
 } 
 
