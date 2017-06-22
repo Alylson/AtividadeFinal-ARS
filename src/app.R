@@ -511,10 +511,6 @@ ui <- fluidPage(
                )
              )
           )  
-    ) ,
-    
-    tabPanel("Inspeção visual"
-             
     ) 
     
   )
@@ -529,12 +525,7 @@ server <- function(input, output) {
     TransformaTextoEmDataframe(observacoes)
     CriaAnaliseBibliometrica()
     print(paste("Quantidade de Publicações lidas: ", QuantidadePublicacoes()))
-    
-    #my_analysis <<- "collaboration"
-    #my_network <<- "authors"
-    #my_netDegree <<- 1 
-    #TransformaDataframeEmGrafo(my_analysis, my_network, my_netDegree)
-    #CalculaMedidasCentralidade()
+
     
   })
   
@@ -845,7 +836,28 @@ server <- function(input, output) {
       # paste0("x=", input$plot_click$x, "\ny=", input$plot_click$y)
     })
   })
-  
+
+  ## ESTATISTICAS DE REDE 
+  #ENTRADA 
+  #in_tp_metrica
+
+  #OPCOES
+  #netdegree 
+  #strength
+  #diameter
+  #density
+  #modularity
+  #pagerank
+  #collaborationUniversities
+  #clustering
+  #eigen
+  #strength  
+
+  #SAIDA 
+  #out_plot_degree  
+  #out_plot_indegree 
+  #out_table_metrics 
+
   output$out_plot_indegree <- renderPlot({
     if (input$in_tp_metrica=="netdegree"){
       hist(my_graph_metrics$indegree,col="lightblue", xlab="Grau de entrada", ylab="Frequência", main="", axes="TRUE")
