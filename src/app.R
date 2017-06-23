@@ -505,6 +505,7 @@ ui <- fluidPage(
                ),
                mainPanel(
                  tabsetPanel(
+                   tabPanel("Plot_J",plotOutput("out_plot_statistics")), 
                    tabPanel("Plot",plotOutput("out_plot_degree")), 
                    tabPanel("Summary", plotOutput("out_plot_indegree")), 
                    tabPanel("Dados", dataTableOutput('out_table_metrics'))
@@ -807,6 +808,29 @@ server <- function(input, output) {
   })
   })
   
+    ## ESTATISTICAS DE REDE 
+  #ENTRADA 
+  #in_tp_metrica
+
+  #OPCOES
+  #netdegree 
+  #strength
+  #diameter
+  #density
+  #modularity
+  #pagerank
+  #collaborationUniversities
+  #clustering
+  #eigen
+  #strength  
+
+  #SAIDA 
+  ###out_plot_statistics
+  #out_plot_degree  
+  #out_plot_indegree 
+  #out_table_metrics 
+
+  #?????????
   observeEvent(input$in_cria_rede,{
     output$out_table_metrics = renderDataTable({
       # dd[ order(-dd[,4], dd[,1]), ]
@@ -837,60 +861,43 @@ server <- function(input, output) {
     })
   })
 
-  ## ESTATISTICAS DE REDE 
-  #ENTRADA 
-  #in_tp_metrica
 
-  #OPCOES
-  #netdegree 
-  #strength
-  #diameter
-  #density
-  #modularity
-  #pagerank
-  #collaborationUniversities
-  #clustering
-  #eigen
-  #strength  
 
-  #SAIDA 
-  #out_plot_degree  
-  #out_plot_indegree 
-  #out_table_metrics 
+##
+##  output$out_plot_indegree <- renderPlot({
+##    if (input$in_tp_metrica=="netdegree"){
+##      hist(my_graph_metrics$indegree,col="lightblue", xlab="Grau de entrada", ylab="Frequência", main="", axes="TRUE")
+##      legend("topright", c(paste("Mínimo =", round(my_graph.indegree.summary[1],2)), 
+##                           paste("Máximo=", round(my_graph.indegree.summary[6],2)), 
+##                           paste("Média=", round(my_graph.indegree.summary[4],2)),
+##                           paste("Mediana=", round(my_graph.indegree.summary[3],2)),
+##                           paste("D. Padrão=", round(my_graph.indegree.sd[1],2))),
+##             pch = 1, title = "Grau entrada")
+##    }
+##  })
+##  
+##  output$out_plot_outdegree <- renderPlot({
+##    if (input$in_tp_metrica=="netdegree"){
+##      hist(my_graph_metrics$outdegree,col="lightblue", xlab="Grau de saída", ylab="Frequência", main="", axes="TRUE")
+##      legend("topright", c(paste("Mínimo =", round(my_graph.outdegree.summary[1],2)), 
+##                           paste("Máximo=", round(my_graph.outdegree.summary[6],2)), 
+##                           paste("Média=", round(my_graph.outdegree.summary[4],2)),
+##                           paste("Mediana=", round(my_graph.outdegree.summary[3],2)),
+##                           paste("D.Padrão=", round(my_graph.outdegree.sd[1],2))),
+##             pch = 1, title = "Grau saída")
+##    }
+##  })
+##  
+##  output$out_plot_boxdegree <- renderPlot({
+##    if (input$in_tp_metrica=="netdegree"){
+##      boxplot(my_graph_metrics["indegree"], my_graph_metrics["outdegree"], my_graph_metrics["degree"], notch = FALSE, ylab = 'Grau', 
+##              names = c('Grau entrada', 'Grau saída', 'Grau total'), 
+##              main = '', col = c('blue', 'red', 'orange'),shrink=0.8, textcolor="red")
+##    }
+##  })
 
-  output$out_plot_indegree <- renderPlot({
-    if (input$in_tp_metrica=="netdegree"){
-      hist(my_graph_metrics$indegree,col="lightblue", xlab="Grau de entrada", ylab="Frequência", main="", axes="TRUE")
-      legend("topright", c(paste("Mínimo =", round(my_graph.indegree.summary[1],2)), 
-                           paste("Máximo=", round(my_graph.indegree.summary[6],2)), 
-                           paste("Média=", round(my_graph.indegree.summary[4],2)),
-                           paste("Mediana=", round(my_graph.indegree.summary[3],2)),
-                           paste("D. Padrão=", round(my_graph.indegree.sd[1],2))),
-             pch = 1, title = "Grau entrada")
-    }
-  })
-  
-  output$out_plot_outdegree <- renderPlot({
-    if (input$in_tp_metrica=="netdegree"){
-      hist(my_graph_metrics$outdegree,col="lightblue", xlab="Grau de saída", ylab="Frequência", main="", axes="TRUE")
-      legend("topright", c(paste("Mínimo =", round(my_graph.outdegree.summary[1],2)), 
-                           paste("Máximo=", round(my_graph.outdegree.summary[6],2)), 
-                           paste("Média=", round(my_graph.outdegree.summary[4],2)),
-                           paste("Mediana=", round(my_graph.outdegree.summary[3],2)),
-                           paste("D.Padrão=", round(my_graph.outdegree.sd[1],2))),
-             pch = 1, title = "Grau saída")
-    }
-  })
-  
-  output$out_plot_boxdegree <- renderPlot({
-    if (input$in_tp_metrica=="netdegree"){
-      boxplot(my_graph_metrics["indegree"], my_graph_metrics["outdegree"], my_graph_metrics["degree"], notch = FALSE, ylab = 'Grau', 
-              names = c('Grau entrada', 'Grau saída', 'Grau total'), 
-              main = '', col = c('blue', 'red', 'orange'),shrink=0.8, textcolor="red")
-    }
-  })
 } 
-
+##
 # sem isso nao consegue carregar graficos do diretorio www
 # os arquivos de imagem precisam estar com permissao 664
 #shinyAppDir(".")
