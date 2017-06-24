@@ -161,7 +161,7 @@ CriaNuvemDePalavras = function() {
   v <- sort(rowSums(matrix) , decreasing=TRUE )
   d <- data.frame(word = names(v) , freq=v)
 
-  saida <- wordcloud(d$word , d$freq ,  scale = c(8, 0.5) , max.words = 100, min.freq=10 ,  random.order = FALSE, colors=brewer.pal(8, "Set1"))
+  saida <- wordcloud(d$word , d$freq ,  scale = c(6, 0.5) , max.words = 100, min.freq=2 ,  random.order = FALSE, colors=brewer.pal(8, "Set1"))
   saida
 }
 
@@ -182,13 +182,27 @@ TransformaTextoEmDataframe = function(entrada){
   my_remove.terms <<- c()
   # VETOR DE SINÔNIMOS
   my_synonyms <<- c("study; studies", "system; systems", "library;libraries", "user;users","MODEL;MODELS" )
-  my_papers_df <<- termExtraction(my_papers_df, Field = "TI", synonyms=my_synonyms, remove.numbers=TRUE,  
+  #my_papers_df <<- termExtraction(my_papers_df, Field = "TI", synonyms=my_synonyms, remove.numbers=TRUE,  
+  #                                remove.terms=my_remove.terms, keep.terms=my_keep.terms, verbose=FALSE)
+  #my_papers_df <<- termExtraction(my_papers_df, Field = "TI",  remove.numbers=TRUE,  
+  #                                remove.terms=my_remove.terms, keep.terms=my_keep.terms, verbose=FALSE)
+  #my_papers_df <<- termExtraction(my_papers_df, Field = "AB", synonyms=my_synonyms, remove.numbers=TRUE,
+  #                                remove.terms=my_remove.terms, keep.terms=my_keep.terms, verbose=FALSE)
+  #my_papers_df <<- termExtraction(my_papers_df, Field = "DE", synonyms=my_synonyms, remove.numbers=TRUE,
+  #                                remove.terms=my_remove.terms, keep.terms=my_keep.terms, verbose=FALSE)
+  #my_papers_df <<- termExtraction(my_papers_df, Field = "ID", synonyms=my_synonyms, remove.numbers=TRUE,
+
+
+
+
+
+  my_papers_df <<- termExtraction(my_papers_df, Field = "TI",  remove.numbers=TRUE,  
                                   remove.terms=my_remove.terms, keep.terms=my_keep.terms, verbose=FALSE)
-  my_papers_df <<- termExtraction(my_papers_df, Field = "AB", synonyms=my_synonyms, remove.numbers=TRUE,
+  my_papers_df <<- termExtraction(my_papers_df, Field = "AB",  remove.numbers=TRUE,
                                   remove.terms=my_remove.terms, keep.terms=my_keep.terms, verbose=FALSE)
-  my_papers_df <<- termExtraction(my_papers_df, Field = "DE", synonyms=my_synonyms, remove.numbers=TRUE,
+  my_papers_df <<- termExtraction(my_papers_df, Field = "DE",  remove.numbers=TRUE,
                                   remove.terms=my_remove.terms, keep.terms=my_keep.terms, verbose=FALSE)
-  my_papers_df <<- termExtraction(my_papers_df, Field = "ID", synonyms=my_synonyms, remove.numbers=TRUE,
+  my_papers_df <<- termExtraction(my_papers_df, Field = "ID",  remove.numbers=TRUE,
                                   remove.terms=my_remove.terms, keep.terms=my_keep.terms, verbose=FALSE)
 }
 
@@ -386,18 +400,19 @@ ui <- fluidPage(
                       img(src = 'r_logo.png', height = '300px', width = '300px')
                       
                ),
+               column(1,br(" ")) ,
                column(6,
                       h3("Atividade Final da Disciplina"),
-                      p("Objetivo: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque porttitor nibh ligula, in mattis massa fringilla nec. Curabitur luctus mauris ac mauris venenatis ullamcorper. Duis porta urna mauris, quis varius est aliquam id. Morbi lacinia odio ut nisl posuere cursus eu at dui. Aenean neque lorem, commodo ut pharetra vel, pellentesque ut nisi. Etiam ullamcorper facilisis tortor vitae suscipit. Sed bibendum ex vitae ultricies aliquet."),
+                      h4("Professor Ricardo Barros") ,
+                      p("Objetivo: Este programa visa auxiliar na medição e análise de redes de relacionamentos entre pesquisadores. Estas redes são geradas a partir de pesquisas realizadas no site Web Of Science , que após serem armazenadas em arquivos texto, são usados como insumo pelo programa."),
                       br(),
                       br(),
-                      br("Professor Ricardo Barros"),
                       h3("Grupo 1:"),
                       p("Jerônimo Avelar Filho"),
                       p("Lena Lúcia de Moraes"),
                       p("Leda Alves")
                ) ,
-               column(3,"")
+               column(2,"")
              )
              
     ) ,           
@@ -406,6 +421,7 @@ ui <- fluidPage(
         fileInput("arqtrab", "Selecione arquivo WoS", multiple = FALSE, accept = NULL, width = NULL,
         buttonLabel = "Browse...", placeholder = "No file selected") ,
         textOutput('dadosArquivo'),  
+        br() ,
         actionButton("show0", "Publicaçoes referenciadas" , class = "btn-primary btn-block"  ),
         actionButton("show1", "Autores Citados", class = "btn-primary  btn-block"  ),
         actionButton("show2", "Palavras Chaves Utilizadas", class = "btn-primary  btn-block"  ),
@@ -505,8 +521,9 @@ ui <- fluidPage(
                ),
                mainPanel(
                  tabsetPanel(
-                   tabPanel("Plot_J",plotOutput("out_plot_statistics")), 
-                   tabPanel("Plot",plotOutput("out_plot_degree")), 
+                   #Novo saida de plots 
+                   tabPanel("Plot",plotOutput("out_plot_statistics")), 
+                   #tabPanel("Plot",plotOutput("out_plot_degree")), 
                    tabPanel("Summary", plotOutput("out_plot_indegree")), 
                    tabPanel("Dados", dataTableOutput('out_table_metrics'))
                )
@@ -839,7 +856,8 @@ server <- function(input, output) {
     }, options = list(lengthMenu = c(10, 20, 50,100), pageLength = 10))
   })
   
-  output$out_plot_degree <- renderPlot({
+  #output$out_plot_degree <- renderPlot({
+  output$out_plot_statistics <- renderPlot({
     if (input$in_tp_metrica=="netdegree"){
       #hist(V(my_graph)$degree,col="lightblue",xlim=c(0, max(V(my_graph)$degree)),xlab="Grau dos vértices", ylab="Frequência", main="", axes="TRUE")
       hist(my_graph_metrics$degree,col="lightblue",xlim=c(0, max(my_graph_metrics$degree)),xlab="Grau dos vértices", ylab="Frequência", main="", axes="TRUE")
@@ -852,15 +870,15 @@ server <- function(input, output) {
     }
   })
   
-  observeEvent(input$in_cria_rede,{
-    output$info = renderPrint({
-      my_graph.description
-      print(my_graph.description)
-      #print(paste("Network of",my_analysis,"of",my_network, "with threshold:", my_netDegree,"G=(", vcount(my_graph), ",", ecount(my_graph), ")."))
-      # paste0("x=", input$plot_click$x, "\ny=", input$plot_click$y)
-    })
-  })
-
+  ##observeEvent(input$in_cria_rede,{
+  ##  output$info = renderPrint({
+  ##    my_graph.description
+  ##    print(my_graph.description)
+  ##    #print(paste("Network of",my_analysis,"of",my_network, "with threshold:", my_netDegree,"G=(", vcount(my_graph), ",", ecount(my_graph), ")."))
+  ##    # paste0("x=", input$plot_click$x, "\ny=", input$plot_click$y)
+  ##  })
+  ##})
+##
 
 
 ##
