@@ -263,23 +263,24 @@ CalculaMedidasCentralidade = function(){
   my_graph_metrics<<-my_graph_metrics
   # 4.2 Força dos vértices
   # Força = força de entrada + força de saída
-  V(my_graph)$strengh <- c(graph.strength(my_graph))
-  my_graph_metrics["strengh"]<- (V(my_graph)$strengh)
-  my_graph.strengh.summary <<-summary(V(my_graph)$strengh)
-  my_graph.strengh.sd <<-sd(V(my_graph)$strengh)
+  V(my_graph)$strength <- c(graph.strength(my_graph))
+  my_graph_metrics["strength"]<- (V(my_graph)$strength)
+  my_graph.strength.summary <<-summary(V(my_graph)$strength)
+  my_graph.strength.sd <<-sd(V(my_graph)$strength)
   
   # Força de entrada
-  V(my_graph)$instrengh <- c(graph.strength(my_graph, mode =c("in")))
-  my_graph_metrics["instrengh"]<- (V(my_graph)$instrengh)
-  my_graph.instrengh.summary <<-summary(V(my_graph)$instrengh )
-  my_graph.instrengh.sd <<-sd(V(my_graph)$instrengh )
-  my_graph.instrengh.var <<-var(V(my_graph)$instrengh)
+  V(my_graph)$instrength <- c(graph.strength(my_graph, mode =c("in")))
+  my_graph_metrics["instrength"]<- (V(my_graph)$instrength)
+  my_graph.instrength.summary <<-summary(V(my_graph)$instrength )
+  my_graph.instrength.sd <<-sd(V(my_graph)$instrength )
+  my_graph.instrength.var <<-var(V(my_graph)$instrength)
   
   # Força de saída
-  V(my_graph)$outstrengh <- c(graph.strength(my_graph, mode =c("out")))
-  my_graph_metrics["outstrengh"]<- (V(my_graph)$outstrengh)
-  my_graph.outstrengh.summary <<-summary(V(my_graph)$outstrengh)
-  my_graph.outstrengh.sd <<-sd(V(my_graph)$outstrengh)
+  V(my_graph)$outstrength <- c(graph.strength(my_graph, mode =c("out")))
+  my_graph_metrics["outstrength"]<- (V(my_graph)$outstrength)
+  my_graph.outstrength.summary <<-summary(V(my_graph)$outstrength)
+  my_graph.outstrength.sd <<-sd(V(my_graph)$outstrength)
+  my_graph_metrics<<-my_graph_metrics   #### ?????????
   
   # 4.7 log log
   my_graph.degree.distribution <<- c(degree.distribution(my_graph))
@@ -524,7 +525,7 @@ ui <- fluidPage(
                    #Novo saida de plots 
                    tabPanel("Plot",plotOutput("out_plot_statistics")), 
                    #tabPanel("Plot",plotOutput("out_plot_degree")), 
-                   tabPanel("Summary", plotOutput("out_plot_indegree")), 
+                   #tabPanel("Summary", plotOutput("out_plot_indegree")), 
                    tabPanel("Dados", dataTableOutput('out_table_metrics'))
                )
              )
@@ -847,72 +848,68 @@ server <- function(input, output) {
   #out_plot_indegree 
   #out_table_metrics 
 
-  #?????????
-  observeEvent(input$in_cria_rede,{
-    output$out_table_metrics = renderDataTable({
-      # dd[ order(-dd[,4], dd[,1]), ]
-      dd <-my_graph_metrics[c("name","degree","indegree","outdegree")]
-      dd[order(-dd$degree),]
-    }, options = list(lengthMenu = c(10, 20, 50,100), pageLength = 10))
-  })
   
-  #output$out_plot_degree <- renderPlot({
-  output$out_plot_statistics <- renderPlot({
-    if (input$in_tp_metrica=="netdegree"){
-      #hist(V(my_graph)$degree,col="lightblue",xlim=c(0, max(V(my_graph)$degree)),xlab="Grau dos vértices", ylab="Frequência", main="", axes="TRUE")
-      hist(my_graph_metrics$degree,col="lightblue",xlim=c(0, max(my_graph_metrics$degree)),xlab="Grau dos vértices", ylab="Frequência", main="", axes="TRUE")
-      legend("topright", c(paste("Mín.=", round(my_graph.degree.summary[1],2)),
-                           paste("Máx.=", round(my_graph.degree.summary[6],2)),
-                           paste("Média=", round(my_graph.degree.summary[4],2)),
-                           paste("Mediana=", round(my_graph.degree.summary[3],2)),
-                           paste("D. padrão=", round(my_graph.degree.sd[1],2))),
-             pch = 1, title = "Grau")
+  #output$out_plot_degree <- renderPlot({    
+  observeEvent(input$in_tp_metrica,{ 
+    ## GRAU DA REDE 
+    if (input$in_tp_metrica=="netdegree"){ 
+      output$out_plot_statistics <- renderPlot({
+  
+          #hist(V(my_graph)$degree,col="lightblue",xlim=c(0, max(V(my_graph)$degree)),xlab="Grau dos vértices", ylab="Frequência", main="", axes="TRUE")
+          hist(my_graph_metrics$degree,col="lightblue",xlim=c(0, max(my_graph_metrics$degree)),xlab="Grau dos vértices", ylab="Frequência", main="", axes="TRUE")
+          legend("topright", c(paste("Mín.=", round(my_graph.degree.summary[1],2)),
+                               paste("Máx.=", round(my_graph.degree.summary[6],2)),
+                               paste("Média=", round(my_graph.degree.summary[4],2)),
+                               paste("Mediana=", round(my_graph.degree.summary[3],2)),
+                               paste("D. padrão=", round(my_graph.degree.sd[1],2))),
+                 pch = 1, title = "Grau")
+
+      })
     }
+
+    ## GRAU PONDERADO DA REDE
+    if (input$in_tp_metrica=="strength"){ 
+      output$out_plot_statistics <- renderPlot({
+  
+          #hist(V(my_graph)$degree,col="lightblue",xlim=c(0, max(V(my_graph)$degree)),xlab="Grau dos vértices", ylab="Frequência", main="", axes="TRUE")
+          hist(my_graph_metrics$strength,col="lightblue",xlim=c(0, max(my_graph_metrics$strength)),xlab="Grau Ponderado dos vértices", ylab="Frequência", main="", axes="TRUE")
+          legend("topright", c(paste("Mín.=", round(my_graph.strength.summary[1],2)),
+                               paste("Máx.=", round(my_graph.strength.summary[6],2)),
+                               paste("Média=", round(my_graph.strength.summary[4],2)),
+                               paste("Mediana=", round(my_graph.strength.summary[3],2)),
+                               paste("D. padrão=", round(my_graph.strength.sd[1],2))),
+                 pch = 1, title = "Grau Ponderado")
+
+      })
+    }
+
+
+
+
+  })
+
+  observeEvent(input$in_tp_metrica,{
+    ## GRAU DA REDE 
+    if(input$in_tp_metrica == "netdegree") { 
+      output$out_table_metrics = renderDataTable({
+        # dd[ order(-dd[,4], dd[,1]), ]
+        dd <-my_graph_metrics[c("name","degree","indegree","outdegree")]
+        dd[order(-dd$degree),]
+      }, options = list(lengthMenu = c(10, 20, 50,100), pageLength = 10))
+    }
+
+    ## GRAU PONDERADO DA REDE
+    if(input$in_tp_metrica == "strength") { 
+      output$out_table_metrics = renderDataTable({
+        # dd[ order(-dd[,4], dd[,1]), ]
+        dd <-my_graph_metrics[c("name","strength","instrength","outstrength")]
+        dd[order(-dd$strength),]
+      }, options = list(lengthMenu = c(10, 20, 50,100), pageLength = 10))
+    }
+
   })
   
-  ##observeEvent(input$in_cria_rede,{
-  ##  output$info = renderPrint({
-  ##    my_graph.description
-  ##    print(my_graph.description)
-  ##    #print(paste("Network of",my_analysis,"of",my_network, "with threshold:", my_netDegree,"G=(", vcount(my_graph), ",", ecount(my_graph), ")."))
-  ##    # paste0("x=", input$plot_click$x, "\ny=", input$plot_click$y)
-  ##  })
-  ##})
-##
 
-
-##
-##  output$out_plot_indegree <- renderPlot({
-##    if (input$in_tp_metrica=="netdegree"){
-##      hist(my_graph_metrics$indegree,col="lightblue", xlab="Grau de entrada", ylab="Frequência", main="", axes="TRUE")
-##      legend("topright", c(paste("Mínimo =", round(my_graph.indegree.summary[1],2)), 
-##                           paste("Máximo=", round(my_graph.indegree.summary[6],2)), 
-##                           paste("Média=", round(my_graph.indegree.summary[4],2)),
-##                           paste("Mediana=", round(my_graph.indegree.summary[3],2)),
-##                           paste("D. Padrão=", round(my_graph.indegree.sd[1],2))),
-##             pch = 1, title = "Grau entrada")
-##    }
-##  })
-##  
-##  output$out_plot_outdegree <- renderPlot({
-##    if (input$in_tp_metrica=="netdegree"){
-##      hist(my_graph_metrics$outdegree,col="lightblue", xlab="Grau de saída", ylab="Frequência", main="", axes="TRUE")
-##      legend("topright", c(paste("Mínimo =", round(my_graph.outdegree.summary[1],2)), 
-##                           paste("Máximo=", round(my_graph.outdegree.summary[6],2)), 
-##                           paste("Média=", round(my_graph.outdegree.summary[4],2)),
-##                           paste("Mediana=", round(my_graph.outdegree.summary[3],2)),
-##                           paste("D.Padrão=", round(my_graph.outdegree.sd[1],2))),
-##             pch = 1, title = "Grau saída")
-##    }
-##  })
-##  
-##  output$out_plot_boxdegree <- renderPlot({
-##    if (input$in_tp_metrica=="netdegree"){
-##      boxplot(my_graph_metrics["indegree"], my_graph_metrics["outdegree"], my_graph_metrics["degree"], notch = FALSE, ylab = 'Grau', 
-##              names = c('Grau entrada', 'Grau saída', 'Grau total'), 
-##              main = '', col = c('blue', 'red', 'orange'),shrink=0.8, textcolor="red")
-##    }
-##  })
 
 } 
 ##
