@@ -25,6 +25,32 @@ my_graph_metrics = data.frame()
 
 # Funcoes    ######
 
+
+###  Apoio a Exibicao de plots e tabs na aba estatiticas de rede 
+EscondePlotEstatisticas = function() {
+  hide("out_plot_statistics") 
+  hide("out_table_metrics")
+
+  hide(selector = "#painel_estatisticas li a[data-value=tab_estatisticas_plot]") 
+  hide(selector = "#painel_estatisticas li a[data-value=tab_estatisticas_dados]") 
+  show(selector = "#painel_estatisticas li a[data-value=tab_estatisticas_info]") 
+  
+  show("out_text_statistics") 
+
+}
+
+RestauraSaidasEstatisticas = function() {
+  hide("out_text_statistics")
+
+  show(selector = "#painel_estatisticas li a[data-value=tab_estatisticas_plot]") 
+  show(selector = "#painel_estatisticas li a[data-value=tab_estatisticas_dados]") 
+  hide(selector = "#painel_estatisticas li a[data-value=tab_estatisticas_info]") 
+  
+  show("out_plot_statistics") 
+  show("out_table_metrics")
+
+}
+
 ###  Analise Bibliomtrica
 PublicacoesMaisReferenciadas = function (qtd=11){
   print("Inicio PublicacaoesMaisReferenciadas")
@@ -512,21 +538,36 @@ ui <- fluidPage(
                                                   "Componentes conectados" = "collaborationUniversities",
                                                   "Coeficiente de clustering médio" = "clustering",
                                                   "Centralidade de autovetor" = "eigen",
-                                                  "Comprimento médio de caminho" = "strength")),
+                                                  "Comprimento médio de caminho" = "strength"))
+                                   #,
                                    #"Componentes conectados" = "collaborationUniversities",
                                    #"Coeficiente de clustering médio" = "strength",
                                    #"Centralidade de autovetor" = "collaborationUniversities",
-                                   textOutput('out_tp_metrica'),
-                                   "Teste2")
+                                  # textOutput('out_tp_metrica'),
+                                  # "Teste2"
+                                  )
                             
                ),
                mainPanel(
+                 id="painel_estatisticas" ,
                  tabsetPanel(
                    #Novo saida de plots 
-                   tabPanel("Plot",plotOutput("out_plot_statistics")), 
+                   tabPanel(
+                    title="Plot",
+                    value="tab_estatisticas_plot",
+                    plotOutput("out_plot_statistics")
+                   ), 
                    #tabPanel("Plot",plotOutput("out_plot_degree")), 
                    #tabPanel("Summary", plotOutput("out_plot_indegree")), 
-                   tabPanel("Dados", dataTableOutput('out_table_metrics'))
+                   tabPanel(
+                    title="Dados", 
+                    value="tab_estatisticas_dados",
+                    dataTableOutput('out_table_metrics')),
+                   tabPanel(
+                    title="Informações" , 
+                    value="tab_estatisticas_info" ,
+                    textOutput("out_text_statistics")
+                   )
                )
              )
           )  
@@ -883,6 +924,20 @@ server <- function(input, output) {
       })
     }
 
+    if (input$in_tp_metrica=="diameter"){ 
+      EscondePlotEstatisticas()
+        output$out_text_statistics = renderText(
+          #print(class(my_graph.diameter)) 
+          print(paste("Diametro da rede: ", my_graph.diameter))
+
+        )
+
+
+    } else {   
+
+      RestauraSaidasEstatisticas()
+
+    }
 
 
 
