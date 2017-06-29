@@ -566,7 +566,7 @@ ui <- fluidPage(
                    tabPanel(
                     title="Informações" , 
                     value="tab_estatisticas_info" ,
-                    textOutput("out_text_statistics")
+                    htmlOutput("out_text_statistics")
                    )
                )
              )
@@ -891,9 +891,12 @@ server <- function(input, output) {
 
   
   #output$out_plot_degree <- renderPlot({    
+
+  # Eventos geradores de gráficos
   observeEvent(input$in_tp_metrica,{ 
     ## GRAU DA REDE 
     if (input$in_tp_metrica=="netdegree"){ 
+      RestauraSaidasEstatisticas()
       output$out_plot_statistics <- renderPlot({
   
           #hist(V(my_graph)$degree,col="lightblue",xlim=c(0, max(V(my_graph)$degree)),xlab="Grau dos vértices", ylab="Frequência", main="", axes="TRUE")
@@ -910,6 +913,7 @@ server <- function(input, output) {
 
     ## GRAU PONDERADO DA REDE
     if (input$in_tp_metrica=="strength"){ 
+      RestauraSaidasEstatisticas()
       output$out_plot_statistics <- renderPlot({
   
           #hist(V(my_graph)$degree,col="lightblue",xlim=c(0, max(V(my_graph)$degree)),xlab="Grau dos vértices", ylab="Frequência", main="", axes="TRUE")
@@ -924,25 +928,37 @@ server <- function(input, output) {
       })
     }
 
+
+    # Eventos geradores de Informações  
+    #Diametro 
     if (input$in_tp_metrica=="diameter"){ 
       EscondePlotEstatisticas()
         output$out_text_statistics = renderText(
           #print(class(my_graph.diameter)) 
-          print(paste("Diametro da rede: ", my_graph.diameter))
 
+          #print(paste("Diametro da rede: ", my_graph.diameter))
+          print(paste("<br><br><b>Diametro da Rede: </b>", my_graph.diameter))
         )
+    } 
 
+    #  my_graph.density <<-graph.density(my_graph)
 
-    } else {   
+    #Densidade da rede  
+    if (input$in_tp_metrica=="density"){ 
+      EscondePlotEstatisticas()
+        output$out_text_statistics = renderText(
+          #print(class(my_graph.diameter)) 
 
-      RestauraSaidasEstatisticas()
-
+          #print(paste("Diametro da rede: ", my_graph.diameter))
+          print(paste("<br><br><b>Densidade da Rede: </b>", my_graph.density))
+        )
     }
-
-
-
+    
   })
 
+
+
+  # Eventos geradores de tabelas 
   observeEvent(input$in_tp_metrica,{
     ## GRAU DA REDE 
     if(input$in_tp_metrica == "netdegree") { 
