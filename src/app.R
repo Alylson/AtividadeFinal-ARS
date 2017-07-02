@@ -364,9 +364,21 @@ CalculaMedidasCentralidade = function(){
   
   # 4.eigen_centrality
   my_graph.eigen <<-eigen_centrality(my_graph)
-  print("Eigen centrality")
-  print(my_graph.eigen) 
-  print(class(my_graph.eigen)) 
+  print("Eigen")
+  print(my_graph.eigen)
+  print(head(my_graph.eigen))
+  print(class(my_graph.eigen))
+  
+  
+  #my_graph_clusters <<-clusters(my_graph, mode="strong" )
+  V(my_graph)$eigen <-(eigen_centrality(my_graph))$vector
+  my_graph_metrics["eigen"] <<-  (V(my_graph)$eigen)
+  my_graph_metrics.eigen.summary <<-summary(V(my_graph)$eigen)
+  my_graph_metrics.eigen.summary.sd <<-sd(V(my_graph)$eigen)
+
+
+
+
 
   # 4.Densidade
   my_graph.density <<-graph.density(my_graph)
@@ -568,12 +580,7 @@ ui <- fluidPage(
                                                   "Coeficiente de clustering " = "clustering",
                                                   "Centralidade de autovetor" = "eigen",
                                                   "Comprimento médio de caminho" = "strength"))
-                                   #,
-                                   #"Componentes conectados" = "collaborationUniversities",
-                                   #"Coeficiente de clustering médio" = "strength",
-                                   #"Centralidade de autovetor" = "collaborationUniversities",
-                                  # textOutput('out_tp_metrica'),
-                                  # "Teste2"
+
                                   )
                             
                ),
@@ -1004,6 +1011,35 @@ server <- function(input, output) {
       })
     }
 
+
+    if (input$in_tp_metrica=="eigen"){ 
+      RestauraSaidasEstatisticas()
+      print("Centralidade de AutoVetor")
+      print(head(my_graph_metrics$eigen))
+
+      print(class(my_graph_metrics$eigen))
+
+      output$out_plot_statistics <- renderPlot({
+          print("eigen output")
+          print(my_graph_metrics$eigen)
+          hist(my_graph_metrics$eigen,col="lightblue",xlim=c(0, max(my_graph_metrics$eigen)),xlab="Centralidade", ylab="Frequência", main="", axes="TRUE")
+          
+
+          legend("topright", c(paste("Mín.=", round(my_graph_metrics.eigen.summary[1],4)),
+                               paste("Máx.=", round(my_graph_metrics.eigen.summary[6],4)),
+                               paste("Média=", round(my_graph_metrics.eigen.summary[4],4)),
+                               paste("Mediana=", round(my_graph_metrics.eigen.summary[3],4))
+                               ,
+                               paste("D. padrão=", round(my_graph_metrics.eigen.summary.sd[1],4))
+                               ),
+                 pch = 1, title = "Centralidade")
+
+      })
+    }
+
+
+
+
     # Eventos geradores de Informações  
     #Diametro 
     if (input$in_tp_metrica=="diameter"){ 
@@ -1081,6 +1117,16 @@ server <- function(input, output) {
         dd <-my_graph_metrics[c("name","clustering")]
 
         dd[order(-dd$clustering),]
+      }, options = list(lengthMenu = c(10, 20, 50,100), pageLength = 10))
+    }
+
+
+    if(input$in_tp_metrica == "eigen") { 
+      output$out_table_metrics = renderDataTable({
+
+        dd <-my_graph_metrics[c("name","eigen")]
+
+        dd[order(-dd$eigen),]
       }, options = list(lengthMenu = c(10, 20, 50,100), pageLength = 10))
     }
 
