@@ -344,33 +344,26 @@ CalculaMedidasCentralidade = function(){
   
   # 4.Proximidade - A centralidade de proximidade mede quantas etapas são necessárias para acessar cada outro vértice de um determinado vértice.
   V(my_graph)$closeness <- c(closeness(my_graph))
-  my_graph_metrics["closeness"]<-(V(my_graph)$closeness)
+  my_graph_metrics["closeness"]<<-(V(my_graph)$closeness)
   my_graph.closeness <<- centralization.closeness(my_graph)
-  my_graph.closeness.res.sumary <<- summary (my_graph.closeness$res)
+  my_graph.closeness.res.summary <<- summary (my_graph.closeness$res)
   my_graph.closeness.res.sd <<-sd(my_graph.closeness$res)
   
   # 4.Intermediação
   V(my_graph)$betweenness <- betweenness(my_graph)
-  my_graph_metrics["betweenness"]<- (V(my_graph)$betweenness)
+  my_graph_metrics["betweenness"]<<- (V(my_graph)$betweenness)
   my_graph.betweenness <<- centralization.betweenness(my_graph)
-  my_graph.betweenness.res.sumary <<-summary (my_graph.betweenness$res)
+  my_graph.betweenness.res.summary <<-summary (my_graph.betweenness$res)
   my_graph.betweenness.res.sd <<-sd(my_graph.betweenness$res)
   
   # 4.Excentricidade
   V(my_graph)$eccentricity <-eccentricity(my_graph)
-  my_graph_metrics["eccentricity"]<- (V(my_graph)$eccentricity)
-  my_graph.eccentricity.sumary <<- summary (V(my_graph)$eccentricity)
-  my_graph.eccentricity.sd <<-sd(V(my_graph)$eccentricity)
+  my_graph_metrics["eccentricity"]<<- (V(my_graph)$eccentricity)
+  my_graph.eccentricity.res.summary <<- summary (V(my_graph)$eccentricity)
+  my_graph.eccentricity.res.sd <<-sd(V(my_graph)$eccentricity)
   
   # 4.eigen_centrality
   my_graph.eigen <<-eigen_centrality(my_graph)
-  print("Eigen")
-  print(my_graph.eigen)
-  print(head(my_graph.eigen))
-  print(class(my_graph.eigen))
-  
-  
-  #my_graph_clusters <<-clusters(my_graph, mode="strong" )
   V(my_graph)$eigen <-(eigen_centrality(my_graph))$vector
   my_graph_metrics["eigen"] <<-  (V(my_graph)$eigen)
   my_graph_metrics.eigen.summary <<-summary(V(my_graph)$eigen)
@@ -576,10 +569,15 @@ ui <- fluidPage(
                                                   "Densidade do grafo" = "density",
                                                   "Modularidade" = "modularity",
                                                   "PageRank" = "pagerank",
+                                                  "Intermediação" = "betweenness", 
                                                   #"Componentes conectados" = "collaborationUniversities",
                                                   "Coeficiente de clustering " = "clustering",
                                                   "Centralidade de autovetor" = "eigen",
-                                                  "Comprimento médio de caminho" = "strength"))
+                                                  "Excentricidade" = "eccentricity"
+                                                  #"Comprimento médio de caminho" = "strength"
+
+                                                  )
+                                                )
 
                                   )
                             
@@ -1014,14 +1012,7 @@ server <- function(input, output) {
 
     if (input$in_tp_metrica=="eigen"){ 
       RestauraSaidasEstatisticas()
-      print("Centralidade de AutoVetor")
-      print(head(my_graph_metrics$eigen))
-
-      print(class(my_graph_metrics$eigen))
-
       output$out_plot_statistics <- renderPlot({
-          print("eigen output")
-          print(my_graph_metrics$eigen)
           hist(my_graph_metrics$eigen,col="lightblue",xlim=c(0, max(my_graph_metrics$eigen)),xlab="Centralidade", ylab="Frequência", main="", axes="TRUE")
           
 
@@ -1037,7 +1028,44 @@ server <- function(input, output) {
       })
     }
 
+    if (input$in_tp_metrica=="betweenness"){ 
+      RestauraSaidasEstatisticas()
 
+      output$out_plot_statistics <- renderPlot({
+          hist(my_graph_metrics$betweenness,col="lightblue",xlim=c(0, max(my_graph_metrics$betweenness)),xlab="Centralidade", ylab="Frequência", main="", axes="TRUE")
+          
+
+          legend("topright", c(paste("Mín.=", round(my_graph.betweenness.res.summary[1],4)),
+                               paste("Máx.=", round(my_graph.betweenness.res.summary[6],4)),
+                               paste("Média=", round(my_graph.betweenness.res.summary[4],4)),
+                               paste("Mediana=", round(my_graph.betweenness.res.summary[3],4))
+                               ,
+                               paste("D. padrão=", round(my_graph.betweenness.res.sd[1],4))
+                               ),
+                 pch = 1, title = "Centralidade")
+
+      })
+    }
+
+
+    if (input$in_tp_metrica=="eccentricity"){ 
+      RestauraSaidasEstatisticas()
+
+      output$out_plot_statistics <- renderPlot({
+          hist(my_graph_metrics$eccentricity,col="lightblue",xlim=c(0, max(my_graph_metrics$eccentricity)),xlab="Excentricidade", ylab="Frequência", main="", axes="TRUE")
+          
+
+          legend("topright", c(paste("Mín.=", round(my_graph.eccentricity.res.summary[1],4)),
+                               paste("Máx.=", round(my_graph.eccentricity.res.summary[6],4)),
+                               paste("Média=", round(my_graph.eccentricity.res.summary[4],4)),
+                               paste("Mediana=", round(my_graph.eccentricity.res.summary[3],4))
+                               ,
+                               paste("D. padrão=", round(my_graph.eccentricity.res.sd[1],4))
+                               ),
+                 pch = 1, title = "Excentricidade")
+
+      })
+    }    
 
 
     # Eventos geradores de Informações  
@@ -1130,6 +1158,24 @@ server <- function(input, output) {
       }, options = list(lengthMenu = c(10, 20, 50,100), pageLength = 10))
     }
 
+
+    if(input$in_tp_metrica == "betweenness") { 
+      output$out_table_metrics = renderDataTable({
+
+        dd <-my_graph_metrics[c("name","betweenness")]
+
+        dd[order(-dd$betweenness),]
+      }, options = list(lengthMenu = c(10, 20, 50,100), pageLength = 10))
+    }
+
+    if(input$in_tp_metrica == "eccentricity") { 
+      output$out_table_metrics = renderDataTable({
+
+        dd <-my_graph_metrics[c("name","eccentricity")]
+
+        dd[order(-dd$eccentricity),]
+      }, options = list(lengthMenu = c(10, 20, 50,100), pageLength = 10))
+    }
 
   })
   
