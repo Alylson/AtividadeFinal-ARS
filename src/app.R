@@ -364,7 +364,10 @@ CalculaMedidasCentralidade = function(){
   
   # 4.eigen_centrality
   my_graph.eigen <<-eigen_centrality(my_graph)
-  
+  print("Eigen centrality")
+  print(my_graph.eigen) 
+  print(class(my_graph.eigen)) 
+
   # 4.Densidade
   my_graph.density <<-graph.density(my_graph)
   
@@ -378,13 +381,19 @@ CalculaMedidasCentralidade = function(){
   V(my_graph)$pagerank <-(page.rank(my_graph))$vector
   my_graph_metrics["pagerank"]<<- (V(my_graph)$pagerank)
   my_graph_metrics.pagerank.summary <<-summary(V(my_graph)$pagerank)
-
-  #print(head(my_graph_metrics["pagerank"]))
-  #Clusterring
+  my_graph_metrics.pagerank.summary.sd <<-sd(V(my_graph)$pagerank)
+##
+##  my_graph_clusters <<-clusters(my_graph, mode="strong" )
+##  V(my_graph)$clustering <-(clusters(my_graph))$membership
+##  my_graph_metrics$clustering<<- data.frame(V(my_graph)$clustering)
+##  my_graph_metrics.clustering.summary <<-summary(V(my_graph)$clustering)
+##
   my_graph_clusters <<-clusters(my_graph, mode="strong" )
-  
   V(my_graph)$clustering <-(clusters(my_graph))$membership
-  my_graph_metrics$clustering<- data.frame(V(my_graph)$clustering)
+  my_graph_metrics["clustering"] <<-  (V(my_graph)$clustering)
+  my_graph_metrics.clustering.summary <<-summary(V(my_graph)$clustering)
+  my_graph_metrics.clustering.summary.sd <<-sd(V(my_graph)$clustering)
+
 }
 
 ImprimeGrau = function(){
@@ -555,8 +564,8 @@ ui <- fluidPage(
                                                   "Densidade do grafo" = "density",
                                                   "Modularidade" = "modularity",
                                                   "PageRank" = "pagerank",
-                                                  "Componentes conectados" = "collaborationUniversities",
-                                                  "Coeficiente de clustering médio" = "clustering",
+                                                  #"Componentes conectados" = "collaborationUniversities",
+                                                  "Coeficiente de clustering " = "clustering",
                                                   "Centralidade de autovetor" = "eigen",
                                                   "Comprimento médio de caminho" = "strength"))
                                    #,
@@ -949,6 +958,51 @@ server <- function(input, output) {
     }
 
 
+    if (input$in_tp_metrica=="pagerank"){ 
+      RestauraSaidasEstatisticas()
+      print(my_graph_metrics.pagerank.summary)
+      output$out_plot_statistics <- renderPlot({
+  
+          #hist(V(my_graph)$degree,col="lightblue",xlim=c(0, max(V(my_graph)$degree)),xlab="Grau dos vértices", ylab="Frequência", main="", axes="TRUE")
+          hist(my_graph_metrics$pagerank,col="lightblue",xlim=c(0, max(my_graph_metrics$pagerank)),xlab="Pagerank", ylab="Frequência", main="", axes="TRUE")
+          legend("topright", c(paste("Mín.=", round(my_graph_metrics.pagerank.summary[1],4)),
+                               paste("Máx.=", round(my_graph_metrics.pagerank.summary[6],4)),
+                               paste("Média=", round(my_graph_metrics.pagerank.summary[4],4)),
+                               paste("Mediana=", round(my_graph_metrics.pagerank.summary[3],4))
+                               ,
+                               paste("D. padrão=", round(my_graph_metrics.pagerank.summary.sd[1],4))
+                               ),
+                 pch = 1, title = "Pagerank")
+
+      })
+    }
+
+
+
+    if (input$in_tp_metrica=="clustering"){ 
+      RestauraSaidasEstatisticas()
+      print("CLUSTERING J")
+      print(head(my_graph_metrics$clustering))
+
+      print(class(my_graph_metrics$clustering))
+
+      output$out_plot_statistics <- renderPlot({
+        print("Clustering output")
+        print(my_graph_metrics$clustering)
+          hist(my_graph_metrics$clustering,col="lightblue",xlim=c(0, max(my_graph_metrics$clustering)),xlab="Clustering", ylab="Frequência", main="", axes="TRUE")
+          
+
+          legend("topright", c(paste("Mín.=", round(my_graph_metrics.clustering.summary[1],4)),
+                               paste("Máx.=", round(my_graph_metrics.clustering.summary[6],4)),
+                               paste("Média=", round(my_graph_metrics.clustering.summary[4],4)),
+                               paste("Mediana=", round(my_graph_metrics.clustering.summary[3],4))
+                               ,
+                               paste("D. padrão=", round(my_graph_metrics.clustering.summary.sd[1],4))
+                               ),
+                 pch = 1, title = "Clustering")
+
+      })
+    }
 
     # Eventos geradores de Informações  
     #Diametro 
@@ -984,24 +1038,7 @@ server <- function(input, output) {
       )
     } 
     
-    if (input$in_tp_metrica=="pagerank"){ 
-      RestauraSaidasEstatisticas()
-      print(my_graph_metrics.pagerank.summary)
-      output$out_plot_statistics <- renderPlot({
-  
-          #hist(V(my_graph)$degree,col="lightblue",xlim=c(0, max(V(my_graph)$degree)),xlab="Grau dos vértices", ylab="Frequência", main="", axes="TRUE")
-          hist(my_graph_metrics$pagerank,col="lightblue",xlim=c(0, max(my_graph_metrics$pagerank)),xlab="Pagerank", ylab="Frequência", main="", axes="TRUE")
-          legend("topright", c(paste("Mín.=", round(my_graph_metrics.pagerank.summary[1],4)),
-                               paste("Máx.=", round(my_graph_metrics.pagerank.summary[6],4)),
-                               paste("Média=", round(my_graph_metrics.pagerank.summary[4],4)),
-                               paste("Mediana=", round(my_graph_metrics.pagerank.summary[3],4))
-                               #,
-                               #paste("D. padrão=", round(my_graph_metrics.pagerank.summary.sd[1],2))
-                               ),
-                 pch = 1, title = "Pagerank")
-
-      })
-    } 
+ 
     
   
 
@@ -1016,7 +1053,6 @@ server <- function(input, output) {
     ## GRAU DA REDE 
     if(input$in_tp_metrica == "netdegree") { 
       output$out_table_metrics = renderDataTable({
-        # dd[ order(-dd[,4], dd[,1]), ]
         dd <-my_graph_metrics[c("name","degree","indegree","outdegree")]
         dd[order(-dd$degree),]
       }, options = list(lengthMenu = c(10, 20, 50,100), pageLength = 10))
@@ -1025,7 +1061,6 @@ server <- function(input, output) {
     ## GRAU PONDERADO DA REDE
     if(input$in_tp_metrica == "strength") { 
       output$out_table_metrics = renderDataTable({
-        # dd[ order(-dd[,4], dd[,1]), ]
         dd <-my_graph_metrics[c("name","strength","instrength","outstrength")]
         dd[order(-dd$strength),]
       }, options = list(lengthMenu = c(10, 20, 50,100), pageLength = 10))
@@ -1033,16 +1068,21 @@ server <- function(input, output) {
 
     if(input$in_tp_metrica == "pagerank") { 
       output$out_table_metrics = renderDataTable({
-        # dd[ order(-dd[,4], dd[,1]), ]
 
         dd <-my_graph_metrics[c("name","pagerank")]
-        #print(class(dd))
-        #print(head(dd))
-        #print(head(my_graph_metrics))
+
         dd[order(-dd$pagerank),]
       }, options = list(lengthMenu = c(10, 20, 50,100), pageLength = 10))
     }
 
+    if(input$in_tp_metrica == "clustering") { 
+      output$out_table_metrics = renderDataTable({
+
+        dd <-my_graph_metrics[c("name","clustering")]
+
+        dd[order(-dd$clustering),]
+      }, options = list(lengthMenu = c(10, 20, 50,100), pageLength = 10))
+    }
 
 
   })
