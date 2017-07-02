@@ -24,6 +24,9 @@ my_graph_metrics = data.frame()
 
 
 # Funcoes    ######
+#formata numeros com decimais m informa numero e qtd de casas decimais apos a virgula 
+
+fmtd = function(n,d){ prettyNum(round(n,d), big.mark = ".", big.interval = 3, decimal.mark = ",", nsmall = 2) }
 
 
 ###  Apoio a Exibicao de plots e tabs na aba estatiticas de rede 
@@ -375,6 +378,7 @@ CalculaMedidasCentralidade = function(){
   V(my_graph)$pagerank <-(page.rank(my_graph))$vector
   my_graph_metrics["pagerank"]<<- (V(my_graph)$pagerank)
   my_graph_metrics.pagerank.summary <<-summary(V(my_graph)$pagerank)
+
   #print(head(my_graph_metrics["pagerank"]))
   #Clusterring
   my_graph_clusters <<-clusters(my_graph, mode="strong" )
@@ -982,18 +986,19 @@ server <- function(input, output) {
     
     if (input$in_tp_metrica=="pagerank"){ 
       RestauraSaidasEstatisticas()
+      print(my_graph_metrics.pagerank.summary)
       output$out_plot_statistics <- renderPlot({
   
           #hist(V(my_graph)$degree,col="lightblue",xlim=c(0, max(V(my_graph)$degree)),xlab="Grau dos vértices", ylab="Frequência", main="", axes="TRUE")
           hist(my_graph_metrics$pagerank,col="lightblue",xlim=c(0, max(my_graph_metrics$pagerank)),xlab="Pagerank", ylab="Frequência", main="", axes="TRUE")
-          legend("topright", c(paste("Mín.=", round(my_graph_metrics.pagerank.summary[1],2)),
-                               paste("Máx.=", round(my_graph_metrics.pagerank.summary[6],2)),
-                               paste("Média=", round(my_graph_metrics.pagerank.summary[4],2)),
-                               paste("Mediana=", round(my_graph_metrics.pagerank.summary[3],2))
+          legend("topright", c(paste("Mín.=", round(my_graph_metrics.pagerank.summary[1],4)),
+                               paste("Máx.=", round(my_graph_metrics.pagerank.summary[6],4)),
+                               paste("Média=", round(my_graph_metrics.pagerank.summary[4],4)),
+                               paste("Mediana=", round(my_graph_metrics.pagerank.summary[3],4))
                                #,
                                #paste("D. padrão=", round(my_graph_metrics.pagerank.summary.sd[1],2))
                                ),
-                 pch = 1, title = "PAgerank")
+                 pch = 1, title = "Pagerank")
 
       })
     } 
@@ -1029,7 +1034,11 @@ server <- function(input, output) {
     if(input$in_tp_metrica == "pagerank") { 
       output$out_table_metrics = renderDataTable({
         # dd[ order(-dd[,4], dd[,1]), ]
-        dd <-my_graph_metrics[c("name","strength","instrength","outstrength")]
+
+        dd <-my_graph_metrics[c("name","pagerank")]
+        #print(class(dd))
+        #print(head(dd))
+        #print(head(my_graph_metrics))
         dd[order(-dd$pagerank),]
       }, options = list(lengthMenu = c(10, 20, 50,100), pageLength = 10))
     }
