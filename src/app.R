@@ -387,12 +387,10 @@ CalculaMedidasCentralidade = function(){
   my_graph_metrics["pagerank"]<<- (V(my_graph)$pagerank)
   my_graph_metrics.pagerank.summary <<-summary(V(my_graph)$pagerank)
   my_graph_metrics.pagerank.summary.sd <<-sd(V(my_graph)$pagerank)
-##
-##  my_graph_clusters <<-clusters(my_graph, mode="strong" )
-##  V(my_graph)$clustering <-(clusters(my_graph))$membership
-##  my_graph_metrics$clustering<<- data.frame(V(my_graph)$clustering)
-##  my_graph_metrics.clustering.summary <<-summary(V(my_graph)$clustering)
-##
+
+
+
+  # Clustering
   my_graph_clusters <<-clusters(my_graph, mode="strong" )
   V(my_graph)$clustering <-(clusters(my_graph))$membership
   my_graph_metrics["clustering"] <<-  (V(my_graph)$clustering)
@@ -573,7 +571,8 @@ ui <- fluidPage(
                                                   #"Componentes conectados" = "collaborationUniversities",
                                                   "Coeficiente de clustering " = "clustering",
                                                   "Centralidade de autovetor" = "eigen",
-                                                  "Excentricidade" = "eccentricity"
+                                                  "Excentricidade" = "eccentricity" ,
+                                                  "Proximidade" = "closeness"
                                                   #"Comprimento médio de caminho" = "strength"
 
                                                   )
@@ -1067,6 +1066,25 @@ server <- function(input, output) {
       })
     }    
 
+    if (input$in_tp_metrica=="closeness"){ 
+      RestauraSaidasEstatisticas()
+
+      output$out_plot_statistics <- renderPlot({
+          hist(my_graph_metrics$closeness,col="lightblue",xlim=c(0, max(my_graph_metrics$closeness)),xlab="Proximidade", ylab="Frequência", main="", axes="TRUE")
+          
+
+          legend("topright", c(paste("Mín.=", round(my_graph.closeness.res.summary[1],4)),
+                               paste("Máx.=", round(my_graph.closeness.res.summary[6],4)),
+                               paste("Média=", round(my_graph.closeness.res.summary[4],4)),
+                               paste("Mediana=", round(my_graph.closeness.res.summary[3],4))
+                               ,
+                               paste("D. padrão=", round(my_graph.closeness.res.sd[1],4))
+                               ),
+                 pch = 1, title = "Proximidade")
+
+      })
+    }
+
 
     # Eventos geradores de Informações  
     #Diametro 
@@ -1174,6 +1192,15 @@ server <- function(input, output) {
         dd <-my_graph_metrics[c("name","eccentricity")]
 
         dd[order(-dd$eccentricity),]
+      }, options = list(lengthMenu = c(10, 20, 50,100), pageLength = 10))
+    }
+
+    if(input$in_tp_metrica == "closeness") { 
+      output$out_table_metrics = renderDataTable({
+
+        dd <-my_graph_metrics[c("name","closeness")]
+
+        dd[order(-dd$closeness),]
       }, options = list(lengthMenu = c(10, 20, 50,100), pageLength = 10))
     }
 
