@@ -38,6 +38,7 @@ EscondePlotEstatisticas = function() {
   hide(selector = "#painel_estatisticas li a[data-value=tab_estatisticas_dados]") 
   show(selector = "#painel_estatisticas li a[data-value=tab_estatisticas_info]") 
   
+  
   show("out_text_statistics") 
 
 }
@@ -85,9 +86,7 @@ PublicacoesMaisReferenciadas = function (qtd=11){
     j=j+2
     i=i+1
   }
-  #print(summary(output_df))
-  #output_df <<- cbind("Publicação" = publicacao, "Quantidade Citações" = qtd_citacoes )
-  #output_df 
+
   saida <- data.frame(publicacao, qtd_citacoes)
   names(saida) <- c("Publicação" , "Quantidade de Citações") 
   print("Fim PublicacaoesMaisReferenciadas")
@@ -111,12 +110,10 @@ AutoresMaisCitados = function(n=10,ano="Todos"){
   t=sort(table(vautores), decreasing = TRUE)
   autores = names(t)
   qtds = as.vector(t)
-  #saida <-  cbind("Autores" = autores , "Numero de Citações" = qtds)
+
   saida <- data.frame(autores,qtds) 
   names(saida) <- c( "Autores" , "Numero de Citações")
-  #for(i in 1:n){
-  #  saida =   paste(saida,"<tr><td>",autores[i],"</td><td align='right'>",fns(qtds[i]),"</td></tr>")
-  #}
+
   saida
 }
 
@@ -193,11 +190,7 @@ CriaNuvemDePalavras = function() {
   #x= sort(table (my_papers_df$LA), decreasing = TRUE)
   d =   my_papers_df$DE[!is.na(my_papers_df$DE)] 
   conjunto_palavras = Corpus(VectorSource(d))
-  ##conjunto_palavras <- tm_map(saida, content_transformer(tolower))
-  ##conjunto_palavras <- tm_map(saida, removePunctuation)
-  ##conjunto_palavras <- tm_map(saida, PlainTextDocument)
-  ##conjunto_palavras <- tm_map(saida, removeWords, stopwords('english'))
-  ##conjunto_palavras <- tm_map(saida, stemDocument)
+
 
   tdm <- TermDocumentMatrix(conjunto_palavras)
   matrix <- as.matrix(tdm)
@@ -225,19 +218,6 @@ TransformaTextoEmDataframe = function(entrada){
   my_remove.terms <<- c()
   # VETOR DE SINÔNIMOS
   my_synonyms <<- c("study; studies", "system; systems", "library;libraries", "user;users","MODEL;MODELS" )
-  #my_papers_df <<- termExtraction(my_papers_df, Field = "TI", synonyms=my_synonyms, remove.numbers=TRUE,  
-  #                                remove.terms=my_remove.terms, keep.terms=my_keep.terms, verbose=FALSE)
-  #my_papers_df <<- termExtraction(my_papers_df, Field = "TI",  remove.numbers=TRUE,  
-  #                                remove.terms=my_remove.terms, keep.terms=my_keep.terms, verbose=FALSE)
-  #my_papers_df <<- termExtraction(my_papers_df, Field = "AB", synonyms=my_synonyms, remove.numbers=TRUE,
-  #                                remove.terms=my_remove.terms, keep.terms=my_keep.terms, verbose=FALSE)
-  #my_papers_df <<- termExtraction(my_papers_df, Field = "DE", synonyms=my_synonyms, remove.numbers=TRUE,
-  #                                remove.terms=my_remove.terms, keep.terms=my_keep.terms, verbose=FALSE)
-  #my_papers_df <<- termExtraction(my_papers_df, Field = "ID", synonyms=my_synonyms, remove.numbers=TRUE,
-
-
-
-
 
   my_papers_df <<- termExtraction(my_papers_df, Field = "TI",  remove.numbers=TRUE,  
                                   remove.terms=my_remove.terms, keep.terms=my_keep.terms, verbose=FALSE)
@@ -268,14 +248,11 @@ TransformaDataframeEmGrafo = function(my_analysis, my_network, my_netDegree){
   }
   diag <- Matrix::diag 
   my_NetMatrix <-as.matrix( my_NetMatrix[diag(my_NetMatrix) >= my_netDegree,diag(my_NetMatrix) >= my_netDegree])
-  #diag(my_NetMatrix) <- 0
-  #my_NetMatrix <<-my_NetMatrix
-  #my_graph <<- graph.adjacency(my_NetMatrix)
-  #my_graph <<- graph.adjacency(my_NetMatrix,mode = "directed")
+
   my_graph <<-graph_from_adjacency_matrix(my_NetMatrix, weighted=TRUE,mode = "directed")
   my_NetMatrix <<-my_NetMatrix
   my_graph.description <<- paste ("Network of ",my_analysis," of ",my_network, " with threshold ", my_netDegree,". With ", vcount(my_graph), " nodes and ", ecount(my_graph), " edges.",  sep = "")
-  #my_graph.description
+
 }
 
 CalculaMedidasCentralidade = function(){
@@ -370,9 +347,6 @@ CalculaMedidasCentralidade = function(){
   my_graph_metrics.eigen.summary.sd <<-sd(V(my_graph)$eigen)
 
 
-
-
-
   # 4.Densidade
   my_graph.density <<-graph.density(my_graph)
   
@@ -387,7 +361,6 @@ CalculaMedidasCentralidade = function(){
   my_graph_metrics["pagerank"]<<- (V(my_graph)$pagerank)
   my_graph_metrics.pagerank.summary <<-summary(V(my_graph)$pagerank)
   my_graph_metrics.pagerank.summary.sd <<-sd(V(my_graph)$pagerank)
-
 
 
   # Clustering
@@ -435,19 +408,13 @@ ImprimeGrau = function(){
   
 }
 
-##ConvArqParaDataFrame = function(entrada){
-##  trab_df <<- convert2df(entrada, dbsource="isi", format="plaintext")
-##  trab_analise_bbl <<- biblioAnalysis(trab_df, sep = ";"
-
-##}
-
-
-
+if(interactive()) { 
 ui <- fluidPage(
   useShinyjs() ,
   titlePanel("Análise de Redes de Colaboração Científica com R"),
   
   tabsetPanel(
+    id="tabSetPrincipal" ,
     tabPanel("Apresentação", 
              fluidRow(
                column(3,
@@ -568,12 +535,11 @@ ui <- fluidPage(
                                                   "Modularidade" = "modularity",
                                                   "PageRank" = "pagerank",
                                                   "Intermediação" = "betweenness", 
-                                                  #"Componentes conectados" = "collaborationUniversities",
+
                                                   "Coeficiente de clustering " = "clustering",
                                                   "Centralidade de autovetor" = "eigen",
                                                   "Excentricidade" = "eccentricity" ,
                                                   "Proximidade" = "closeness"
-                                                  #"Comprimento médio de caminho" = "strength"
 
                                                   )
                                                 )
@@ -584,14 +550,14 @@ ui <- fluidPage(
                mainPanel(
                  id="painel_estatisticas" ,
                  tabsetPanel(
+                   id="estatisticasTabset",
                    #Novo saida de plots 
                    tabPanel(
                     title="Plot",
                     value="tab_estatisticas_plot",
                     plotOutput("out_plot_statistics")
                    ), 
-                   #tabPanel("Plot",plotOutput("out_plot_degree")), 
-                   #tabPanel("Summary", plotOutput("out_plot_indegree")), 
+
                    tabPanel(
                     title="Dados", 
                     value="tab_estatisticas_dados",
@@ -608,7 +574,7 @@ ui <- fluidPage(
     
   )
 )
-server <- function(input, output) {
+server <- function(input, output,session) {
   
   output$dadosArquivo = renderText({
     arquivoEntrada <- input$arqtrab
@@ -683,7 +649,7 @@ server <- function(input, output) {
     hide("painel_1")
     show("nuvem_de_palavras_chave")
     output$nuvem_de_palavras_chave =  renderPlot({ 
-       #wordcloud(CriaMapaDePalavras() , max.words = 100, random.order = FALSE, colors=brewer.pal(8, "Dark2"))
+
       CriaNuvemDePalavras() 
     })
   })  
@@ -901,38 +867,16 @@ server <- function(input, output) {
   })
   
     ## ESTATISTICAS DE REDE 
-  #ENTRADA 
-  #in_tp_metrica
-
-  #OPCOES
-  #netdegree 
-  #strength
-  #diameter
-  #density
-  #modularity
-  #pagerank
-  #collaborationUniversities
-  #clustering
-  #eigen
-  #strength  
-
-  #SAIDA 
-  ###out_plot_statistics
-  #out_plot_degree  
-  #out_plot_indegree 
-  #out_table_metrics 
-
-  
-  #output$out_plot_degree <- renderPlot({    
 
   # Eventos geradores de gráficos
   observeEvent(input$in_tp_metrica,{ 
     ## GRAU DA REDE 
     if (input$in_tp_metrica=="netdegree"){ 
       RestauraSaidasEstatisticas()
+      updateTabsetPanel(session,"estatisticasTabset" , selected = "tab_estatisticas_plot")
+
       output$out_plot_statistics <- renderPlot({
-  
-          #hist(V(my_graph)$degree,col="lightblue",xlim=c(0, max(V(my_graph)$degree)),xlab="Grau dos vértices", ylab="Frequência", main="", axes="TRUE")
+
           hist(my_graph_metrics$degree,col="lightblue",xlim=c(0, max(my_graph_metrics$degree)),xlab="Grau dos vértices", ylab="Frequência", main="", axes="TRUE")
           legend("topright", c(paste("Mín.=", round(my_graph.degree.summary[1],2)),
                                paste("Máx.=", round(my_graph.degree.summary[6],2)),
@@ -947,9 +891,9 @@ server <- function(input, output) {
     ## GRAU PONDERADO DA REDE
     if (input$in_tp_metrica=="strength"){ 
       RestauraSaidasEstatisticas()
+      updateTabsetPanel(session,"estatisticasTabset" , selected = "tab_estatisticas_plot")
       output$out_plot_statistics <- renderPlot({
-  
-          #hist(V(my_graph)$degree,col="lightblue",xlim=c(0, max(V(my_graph)$degree)),xlab="Grau dos vértices", ylab="Frequência", main="", axes="TRUE")
+
           hist(my_graph_metrics$strength,col="lightblue",xlim=c(0, max(my_graph_metrics$strength)),xlab="Grau Ponderado dos vértices", ylab="Frequência", main="", axes="TRUE")
           legend("topright", c(paste("Mín.=", round(my_graph.strength.summary[1],2)),
                                paste("Máx.=", round(my_graph.strength.summary[6],2)),
@@ -964,10 +908,9 @@ server <- function(input, output) {
 
     if (input$in_tp_metrica=="pagerank"){ 
       RestauraSaidasEstatisticas()
-      print(my_graph_metrics.pagerank.summary)
+      updateTabsetPanel(session,"estatisticasTabset" , selected = "tab_estatisticas_plot")
       output$out_plot_statistics <- renderPlot({
-  
-          #hist(V(my_graph)$degree,col="lightblue",xlim=c(0, max(V(my_graph)$degree)),xlab="Grau dos vértices", ylab="Frequência", main="", axes="TRUE")
+
           hist(my_graph_metrics$pagerank,col="lightblue",xlim=c(0, max(my_graph_metrics$pagerank)),xlab="Pagerank", ylab="Frequência", main="", axes="TRUE")
           legend("topright", c(paste("Mín.=", round(my_graph_metrics.pagerank.summary[1],4)),
                                paste("Máx.=", round(my_graph_metrics.pagerank.summary[6],4)),
@@ -985,16 +928,10 @@ server <- function(input, output) {
 
     if (input$in_tp_metrica=="clustering"){ 
       RestauraSaidasEstatisticas()
-      print("CLUSTERING J")
-      print(head(my_graph_metrics$clustering))
-
-      print(class(my_graph_metrics$clustering))
-
+      updateTabsetPanel(session,"estatisticasTabset" , selected = "tab_estatisticas_plot")
       output$out_plot_statistics <- renderPlot({
-        print("Clustering output")
-        print(my_graph_metrics$clustering)
+
           hist(my_graph_metrics$clustering,col="lightblue",xlim=c(0, max(my_graph_metrics$clustering)),xlab="Clustering", ylab="Frequência", main="", axes="TRUE")
-          
 
           legend("topright", c(paste("Mín.=", round(my_graph_metrics.clustering.summary[1],4)),
                                paste("Máx.=", round(my_graph_metrics.clustering.summary[6],4)),
@@ -1011,6 +948,7 @@ server <- function(input, output) {
 
     if (input$in_tp_metrica=="eigen"){ 
       RestauraSaidasEstatisticas()
+      updateTabsetPanel(session,"estatisticasTabset" , selected = "tab_estatisticas_plot")
       output$out_plot_statistics <- renderPlot({
           hist(my_graph_metrics$eigen,col="lightblue",xlim=c(0, max(my_graph_metrics$eigen)),xlab="Centralidade", ylab="Frequência", main="", axes="TRUE")
           
@@ -1029,7 +967,7 @@ server <- function(input, output) {
 
     if (input$in_tp_metrica=="betweenness"){ 
       RestauraSaidasEstatisticas()
-
+      updateTabsetPanel(session,"estatisticasTabset" , selected = "tab_estatisticas_plot")
       output$out_plot_statistics <- renderPlot({
           hist(my_graph_metrics$betweenness,col="lightblue",xlim=c(0, max(my_graph_metrics$betweenness)),xlab="Centralidade", ylab="Frequência", main="", axes="TRUE")
           
@@ -1049,7 +987,7 @@ server <- function(input, output) {
 
     if (input$in_tp_metrica=="eccentricity"){ 
       RestauraSaidasEstatisticas()
-
+      updateTabsetPanel(session,"estatisticasTabset" , selected = "tab_estatisticas_plot")
       output$out_plot_statistics <- renderPlot({
           hist(my_graph_metrics$eccentricity,col="lightblue",xlim=c(0, max(my_graph_metrics$eccentricity)),xlab="Excentricidade", ylab="Frequência", main="", axes="TRUE")
           
@@ -1068,7 +1006,7 @@ server <- function(input, output) {
 
     if (input$in_tp_metrica=="closeness"){ 
       RestauraSaidasEstatisticas()
-
+      updateTabsetPanel(session,"estatisticasTabset" , selected = "tab_estatisticas_plot")
       output$out_plot_statistics <- renderPlot({
           hist(my_graph_metrics$closeness,col="lightblue",xlim=c(0, max(my_graph_metrics$closeness)),xlab="Proximidade", ylab="Frequência", main="", axes="TRUE")
           
@@ -1089,24 +1027,23 @@ server <- function(input, output) {
     # Eventos geradores de Informações  
     #Diametro 
     if (input$in_tp_metrica=="diameter"){ 
-      EscondePlotEstatisticas()
+        EscondePlotEstatisticas()
+        updateTabsetPanel(session,"estatisticasTabset" , selected = "tab_estatisticas_info")
         output$out_text_statistics = renderText(
-          #print(class(my_graph.diameter)) 
 
-          #print(paste("Diametro da rede: ", my_graph.diameter))
           print(paste("<br><br><b>Diametro da Rede: </b>", my_graph.diameter))
         )
     } 
 
-    #  my_graph.density <<-graph.density(my_graph)
 
     #Densidade da rede  
     if (input$in_tp_metrica=="density"){ 
       EscondePlotEstatisticas()
-        output$out_text_statistics = renderText(
-          #print(class(my_graph.diameter)) 
+      updateTabsetPanel(session,"estatisticasTabset" , selected = "tab_estatisticas_info")
 
-          #print(paste("Diametro da rede: ", my_graph.diameter))
+
+        output$out_text_statistics = renderText(
+
           print(paste("<br><br><b>Densidade da Rede: </b>", my_graph.density))
         )
     }
@@ -1115,15 +1052,13 @@ server <- function(input, output) {
     #modularity 
     if (input$in_tp_metrica=="modularity"){ 
       EscondePlotEstatisticas()
+      updateTabsetPanel(session,"estatisticasTabset" , selected = "tab_estatisticas_info")
+      
       output$out_text_statistics = renderText(
         print(paste("<br><br><b>Modularidade da Rede: </b>", my_graph.modularity))
       )
     } 
     
- 
-    
-  
-
 
 
   })
@@ -1216,4 +1151,4 @@ server <- function(input, output) {
 shinyAppDir(".")
 
 shinyApp(ui = ui, server = server)
-
+}
