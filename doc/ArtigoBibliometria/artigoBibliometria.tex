@@ -1,0 +1,358 @@
+%% abtex2-modelo-artigo.tex, v-1.9.6 laurocesar
+%% Copyright 2012-2016 by abnTeX2 group at http://www.abntex.net.br/
+%%
+%% This work may be distributed and/or modified under the
+%% conditions of the LaTeX Project Public License, either version 1.3
+%% of this license or (at your option) any later version.
+%% The latest version of this license is in
+%%   http://www.latex-project.org/lppl.txt
+%% and version 1.3 or later is part of all distributions of LaTeX
+%% version 2005/12/01 or later.
+%%
+%% This work has the LPPL maintenance status `maintained'.
+%%
+%% The Current Maintainer of this work is the abnTeX2 team, led
+%% by Lauro César Araujo. Further information are available on
+%% http://www.abntex.net.br/
+%%
+%% This work consists of the files abntex2-modelo-artigo.tex and
+%% abntex2-modelo-references.bib
+%%
+
+% ------------------------------------------------------------------------
+% ------------------------------------------------------------------------
+% abnTeX2: Modelo de Artigo Acadêmico em conformidade com
+% ABNT NBR 6022:2003: Informação e documentação - Artigo em publicação
+% periódica científica impressa - Apresentação
+% ------------------------------------------------------------------------
+% ------------------------------------------------------------------------
+
+\documentclass[
+	% -- opções da classe memoir --
+	article,			% indica que é um artigo acadêmico
+	11pt,				% tamanho da fonte
+	oneside,			% para impressão apenas no recto. Oposto a twoside
+	a4paper,			% tamanho do papel.
+	% -- opções da classe abntex2 --
+	%chapter=TITLE,		% títulos de capítulos convertidos em letras maiúsculas
+	%section=TITLE,		% títulos de seções convertidos em letras maiúsculas
+	%subsection=TITLE,	% títulos de subseções convertidos em letras maiúsculas
+	%subsubsection=TITLE % títulos de subsubseções convertidos em letras maiúsculas
+	% -- opções do pacote babel --
+	english,			% idioma adicional para hifenização
+	brazil,				% o último idioma é o principal do documento
+	sumario=tradicional
+	]{abntex2}
+
+
+% ---
+% PACOTES
+% ---
+
+% ---
+% Pacotes fundamentais
+% ---
+\usepackage{lmodern}			% Usa a fonte Latin Modern
+\usepackage[T1]{fontenc}		% Selecao de codigos de fonte.
+\usepackage[utf8]{inputenc}		% Codificacao do documento (conversão automática dos acentos)
+\usepackage{indentfirst}		% Indenta o primeiro parágrafo de cada seção.
+\usepackage{nomencl} 			% Lista de simbolos
+\usepackage{color}				% Controle das cores
+\usepackage{graphicx}			% Inclusão de gráficos
+\usepackage{microtype} 			% para melhorias de justificação
+% ---
+		
+% ---
+% Pacotes adicionais, usados apenas no âmbito do Modelo Canônico do abnteX2
+% ---
+\usepackage{lipsum}				% para geração de dummy text
+% ---
+		
+% ---
+% Pacotes de citações
+% ---
+\usepackage[brazilian,hyperpageref]{backref}	 % Paginas com as citações na bibl
+\usepackage[alf]{abntex2cite}	% Citações padrão ABNT
+% ---
+
+% ---
+% Configurações do pacote backref
+% Usado sem a opção hyperpageref de backref
+\renewcommand{\backrefpagesname}{Citado na(s) página(s):~}
+% Texto padrão antes do número das páginas
+\renewcommand{\backref}{}
+% Define os textos da citação
+\renewcommand*{\backrefalt}[4]{
+	\ifcase #1 %
+		Nenhuma citação no texto.%
+	\or
+		Citado na página #2.%
+	\else
+		Citado #1 vezes nas páginas #2.%
+	\fi}%
+% ---
+
+% ---
+% Informações de dados para CAPA e FOLHA DE ROSTO
+% ---
+\titulo{Análise Bibliométrica com Bibliometrix, Linguagem R e Shiny}
+\autor{Lena Lúcia de Moraes\thanks{lenamoraes@gmail.com} e Jerônimo Avelar Filho\thanks{jeroavf@gmail.com }}
+\local{Brasil}
+%\autor{Equipe \abnTeX\thanks{\url{http://www.abntex.net.br/}} \and Lauro
+%César
+%Araujo\thanks{laurocesar@laurocesar.com}}
+\data{2017, v-1.0}
+% ---
+
+% ---
+% Configurações de aparência do PDF final
+
+% alterando o aspecto da cor azul
+\definecolor{blue}{RGB}{41,5,195}
+
+% informações do PDF
+\makeatletter
+\hypersetup{
+     	%pagebackref=true,
+		pdftitle={\@title},
+		pdfauthor={\@author},
+    	pdfsubject={Cientometria},
+	    pdfcreator={LaTeX with abnTeX2},
+		pdfkeywords={abnt}{latex}{abntex}{abntex2}{atigo científico},
+		colorlinks=true,       		% false: boxed links; true: colored links
+    	linkcolor=blue,          	% color of internal links
+    	citecolor=blue,        		% color of links to bibliography
+    	filecolor=magenta,      		% color of file links
+		urlcolor=blue,
+		bookmarksdepth=4
+}
+\makeatother
+% ---
+
+% ---
+% compila o indice
+% ---
+\makeindex
+% ---
+
+% ---
+% Altera as margens padrões
+% ---
+\setlrmarginsandblock{3cm}{3cm}{*}
+\setulmarginsandblock{3cm}{3cm}{*}
+\checkandfixthelayout
+% ---
+
+% ---
+% Espaçamentos entre linhas e parágrafos
+% ---
+
+% O tamanho do parágrafo é dado por:
+\setlength{\parindent}{1.3cm}
+
+% Controle do espaçamento entre um parágrafo e outro:
+\setlength{\parskip}{0.2cm}  % tente também \onelineskip
+
+% Espaçamento simples
+\SingleSpacing
+
+% ----
+% Início do documento
+% ----
+\begin{document}
+
+% Seleciona o idioma do documento (conforme pacotes do babel)
+%\selectlanguage{english}
+\selectlanguage{brazil}
+
+% Retira espaço extra obsoleto entre as frases.
+\frenchspacing
+
+% ----------------------------------------------------------
+% ELEMENTOS PRÉ-TEXTUAIS
+% ----------------------------------------------------------
+
+%---
+%
+% Se desejar escrever o artigo em duas colunas, descomente a linha abaixo
+% e a linha com o texto ``FIM DE ARTIGO EM DUAS COLUNAS''.
+% \twocolumn[    		% INICIO DE ARTIGO EM DUAS COLUNAS
+%
+%---
+% página de titulo
+\maketitle
+
+% resumo em português
+\begin{resumoumacoluna}
+ Conforme a ABNT NBR 6022:2003, o resumo é elemento obrigatório, constituído de
+ uma sequência de frases concisas e objetivas e não de uma simples enumeração
+ de tópicos, não ultrapassando 250 palavras, seguido, logo abaixo, das palavras
+ representativas do conteúdo do trabalho, isto é, palavras-chave e/ou
+ descritores, conforme a NBR 6028. (\ldots) As palavras-chave devem figurar logo
+ abaixo do resumo, antecedidas da expressão Palavras-chave:, separadas entre si por
+ ponto e finalizadas também por ponto.
+
+ \vspace{\onelineskip}
+
+ \noindent
+ \textbf{Palavras-chave}: Bibliometria. Colaboração Científica. Bibliometrix. Linguagem R. Shiny.
+\end{resumoumacoluna}
+
+% ]  				% FIM DE ARTIGO EM DUAS COLUNAS
+% ---
+
+% ----------------------------------------------------------
+% ELEMENTOS TEXTUAIS
+% ----------------------------------------------------------
+\textual
+
+% ----------------------------------------------------------
+% Introdução
+% ----------------------------------------------------------
+\section*{Introdução}
+\addcontentsline{toc}{section}{Introdução}
+Responsável prof. Ricardo
+
+% ----------------------------------------------------------
+% Seção de explicações
+% ----------------------------------------------------------
+\section{Metodologia}
+
+
+\subsection{Consultas nas Bases: \emph{Web Of Science (WOS), Scopus, PubMed e Scielo}}
+
+Foram realizadas consultas\footnote{As consultas foram realizadas por meio do Portal de Periódicos da CAPES (http://www.periodicos.capes.gov.br), com acesso remoto via CAFe. Acesso em 19/08/2017.} com os termos \emph{scientometry} e \emph{cientometric} nas bases \emph{WOS, Scopus, PubMed} e \emph{Scielo} . As consultas foram realizadas sem restrições, ou seja, não foram realizados filtros de ano, linguagem, país, tipo de documento etc. As consultas retornaram um grande número de artigos de diversas categorias/áreas de conhecimento, com predominância nas áreas da Ciência da Informação (CI) (Tabela ~\ref{tab:resultadoPesquisa}).
+
+Os metadados dos artigos foram salvos na máquina local para posterior tratamento e análise. Vale ressaltar que o formato dos metadados das bases são diferentes e assim, cada base foi analisada separadamente. A \emph{Scopus} retornou o maior número documentos, mas limitou o download dos documentos. Logo, neste trabalho a base da \emph{Scopus} foi limitada aos 2000 artigos de pesquisas mais recentes. Na \emph{WOS, PubMed} e \emph{Scielo} foi possível o download de todos os documentos retornados. Na base de dados da \emph{Scielo}, além dos termos em inglês, foram usados os termos correspondentes em português: cientometria e cientométrica.
+
+
+\begin{table}[!tp]
+\caption{Resultado das buscas nas bases WOS, Scopus, PubMed e Scielo.} \label{tab:resultadoPesquisa}
+\centering
+\begin{tabular}{|p{1.3cm}|p{3cm}|p{1.5cm}|p{7.5cm}|}
+  \hline
+  % after \\: \hline or \cline{col1-col2} \cline{col3-col4} ...
+ \textbf{ Base} & \textbf{Termos de Consulta} &\textbf{No. Artigos} & \textbf{Principais Categorias/Áreas de Pesquisa} \\ \hline%\hline
+  WOS   & TS=(scientometry OR scientometric) & 1284 & Information Science Library Science (625), Computer Science Interdisciplinary Applications (424), Computer Science Information Systems (156), Multidisciplinary Sciences (72).\\ \hline
+   Scopus & scientometry  OR  scientometric  & 6714 (2000 download) & Social Sciences (3,021), Computer Science (3,015) , Medicine (927), Decision Sciences (629), Business, Management and Accounting (553). \\ \hline
+   PubMed & (scientometry) OR scientometric  & 540 & Não disponibilizado.  \\ \hline
+   Scielo & (cientometria) OR (cientométrica) OR (scientometry) OR (scientometric) & 138 &  Ciência da informação e biblioteconomia (30), Biologia (12), Saúde pública, ambiental e ocupacional (10), Ciências multidisciplinares (8).\\ \hline
+\end{tabular}
+\end{table}
+
+\subsection{Tratamento dos Dados}
+
+\subsection{Leitura dos Dados}
+
+\subsection{Análise dos Dados}
+
+\subsubsection{Análise Exploratória}
+
+\subsubsection{Análise Bibliométrica}
+\section{Ferramentas}
+    Responsbilidade do Marcelo
+\section{Resultados}
+
+% ---
+% Finaliza a parte no bookmark do PDF, para que se inicie o bookmark na raiz
+% ---
+\bookmarksetup{startatroot}%
+% ---
+
+% ---
+% Conclusão
+% ---
+\section*{Considerações finais}
+\addcontentsline{toc}{section}{Considerações Finais}
+
+%\lipsum[1]
+
+\begin{citacao}
+%\lipsum[2]
+\end{citacao}
+
+%\lipsum[3]
+
+% ----------------------------------------------------------
+% ELEMENTOS PÓS-TEXTUAIS
+% ----------------------------------------------------------
+\postextual
+
+% ---
+% Título e resumo em língua estrangeira
+% ---
+
+% \twocolumn[    		% INICIO DE ARTIGO EM DUAS COLUNAS
+
+% titulo em inglês
+\titulo{Bibliometric Analysis with Bibliometrix, Language R and Shiny}
+\emptythanks
+\maketitle
+
+% resumo em português
+\renewcommand{\resumoname}{Abstract}
+\begin{resumoumacoluna}
+ \begin{otherlanguage*}{english}
+   According to ABNT NBR 6022:2003, an abstract in foreign language is a back
+   matter mandatory element.
+
+   \vspace{\onelineskip}
+
+   \noindent
+   \textbf{Keywords}:  Bibliometry. Scientific Collaboration. Bibliometrix. Language R. Shiny.
+ \end{otherlanguage*}
+\end{resumoumacoluna}
+
+% ]  				% FIM DE ARTIGO EM DUAS COLUNAS
+% ---
+
+% ----------------------------------------------------------
+% Referências bibliográficas
+% ----------------------------------------------------------
+\bibliography{abntex2-modelo-references}
+
+% ----------------------------------------------------------
+% Glossário
+% ----------------------------------------------------------
+%
+% Há diversas soluções prontas para glossário em LaTeX.
+% Consulte o manual do abnTeX2 para obter sugestões.
+%
+%\glossary
+
+% ----------------------------------------------------------
+% Apêndices
+% ----------------------------------------------------------
+
+% ---
+% Inicia os apêndices
+% ---
+\begin{apendicesenv}
+
+% ----------------------------------------------------------
+\chapter{Apêndice}
+% ----------------------------------------------------------
+%\lipsum[55-57]
+
+\end{apendicesenv}
+% ---
+
+% ----------------------------------------------------------
+% Anexos
+% ----------------------------------------------------------
+\cftinserthook{toc}{AAA}
+% ---
+% Inicia os anexos
+% ---
+%\anexos
+\begin{anexosenv}
+
+% ---
+\chapter{Anexo}
+% ---
+
+%\lipsum[31]
+
+\end{anexosenv}
+
+\end{document}
